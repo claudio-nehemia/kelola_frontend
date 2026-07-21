@@ -1,15 +1,21 @@
 import type { Metadata } from "next";
-import { Geist, Geist_Mono } from "next/font/google";
+import { Nunito, Nunito_Sans } from "next/font/google";
+import { Toaster } from "sonner";
 import "./globals.css";
+import { ReactQueryProvider } from "@/providers/providers";
 
-const geistSans = Geist({
-  variable: "--font-geist-sans",
+const nunitoSans = Nunito_Sans({
+  variable: "--font-nunito-sans",
   subsets: ["latin"],
+  display: "swap",
+  preload: true,
 });
 
-const geistMono = Geist_Mono({
-  variable: "--font-geist-mono",
+const nunitoMono = Nunito({
+  variable: "--font-nunito-mono",
   subsets: ["latin"],
+  display: "swap",
+  preload: true,
 });
 
 export const metadata: Metadata = {
@@ -25,9 +31,20 @@ export default function RootLayout({
   return (
     <html
       lang="en"
-      className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
+      className={`${nunitoSans.variable} ${nunitoMono.variable} h-full antialiased`}
     >
+      <ReactQueryProvider>
       <body className="min-h-full flex flex-col">{children}</body>
+      </ReactQueryProvider>
+
+      <Toaster
+      position="top-center"
+      richColors
+      toastOptions={{style: {
+        width: "365px"
+      }}}
+      />
+
     </html>
   );
 }
