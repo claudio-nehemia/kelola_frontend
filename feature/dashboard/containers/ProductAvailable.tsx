@@ -1,0 +1,32 @@
+import { CardProduct } from "@/feature/_global/components/CardProduct";
+import { dataBestSeller } from "../utils/dataDummy";
+import { NotebookTabs } from "lucide-react";
+import Link from "next/link";
+
+export function ProductAvailable() {
+  return (
+    <div className="space-y-2 mt-10">
+      <div className="flex items-center gap-2">
+        <h1 className="flex bg-[#041336] w-fit text-white px-4 rounded-sm font-bold">
+          Produk Tersedia
+        </h1>
+        <Link href="/product-available">
+          <div className="flex text-blue-500 items-center">
+            <NotebookTabs size={16} />
+            <p>Lihat Detail</p>
+          </div>
+        </Link>
+      </div>
+
+      <div className="grid grid-cols-5 gap-4">
+        {dataBestSeller.map((product) => (
+          <CardProduct
+            key={product.id}
+            nameProduct={product.name}
+            priceProduct={product.price}
+          />
+        ))}
+      </div>
+    </div>
+  );
+}
