@@ -22,8 +22,11 @@ export function ProductAvailable() {
         {dataBestSeller.map((product) => (
           <CardProduct
             key={product.id}
-            nameProduct={product.name}
-            priceProduct={product.price}
+            productName={product.name}
+            priceSell={product.price}
+            cleanProfit={product.cleanProfit}
+            stock={product.stock}
+            category={product.category}
           />
         ))}
       </div>
