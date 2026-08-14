@@ -11,19 +11,29 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { DialogChangePassword } from "@/feature/_global/components/DialogChangePassword";
 import { Footer } from "@/feature/_global/components/Footer";
+import { useAuthStore } from "@/state/authStore";
 import { TextAlignJustify } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { ReactNode, useState } from "react";
 
 export function DashboardLayout({ children }: { children: ReactNode }) {
   const [isOpenDialogChangePassword, setIsOpenDialogChangePassword] =
     useState(false);
+  const clearAuth = useAuthStore((state) => state.clearAuth);
+  const router = useRouter();
+
+  function handleLogout() {
+    clearAuth();
+    router.push("/login");
+  }
+
   return (
     <>
-      <div className="flex flex-col w-full min-h-screen">
+      <div className="flex flex-col w-full min-h-screen overflow-x-hidden">
         <div className="flex flex-col w-full bg-[#041336]">
-          <div className="flex h-15 items-center justify-around">
+          <div className="flex h-16 items-center justify-between px-6 max-w-7xl mx-auto w-full">
             <Link href="/dashboard">
               <Image
                 src="/logoputihkelolatoko.png"
@@ -38,17 +48,18 @@ export function DashboardLayout({ children }: { children: ReactNode }) {
               <DropdownMenuTrigger render={<Button variant="outline" />}>
                 <TextAlignJustify />
               </DropdownMenuTrigger>
-              <DropdownMenuContent>
+              <DropdownMenuContent align="end" className="w-48">
                 <DropdownMenuGroup>
                   <DropdownMenuLabel>Pengaturan</DropdownMenuLabel>
                   <DropdownMenuItem
-                    className={`cursor-pointer`}
+                    className="cursor-pointer"
                     onClick={() => setIsOpenDialogChangePassword(true)}
                   >
                     Ubah Password
                   </DropdownMenuItem>
                   <DropdownMenuItem
-                    className={`bg-red-500 font-bold text-white`}
+                    className="bg-red-500 hover:bg-red-600 font-bold text-white cursor-pointer focus:bg-red-600 focus:text-white"
+                    onClick={handleLogout}
                   >
                     Log Out
                   </DropdownMenuItem>
@@ -57,7 +68,7 @@ export function DashboardLayout({ children }: { children: ReactNode }) {
             </DropdownMenu>
           </div>
         </div>
-        <div className="flex-1 p-10 px-17">{children}</div>
+        <div className="flex-1 p-4 md:p-8 max-w-7xl mx-auto w-full">{children}</div>
         <Footer />
       </div>
 

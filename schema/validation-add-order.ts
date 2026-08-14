@@ -1,11 +1,11 @@
-import { Control } from "react-hook-form";
 import z from "zod";
 
 export const AddOrderSchema = z.object({
   nameCustomer: z
     .string()
-    .min(1, "Nama produk wajib diisi!")
-    .max(100, "Nama produk tidak boleh lebih dari 100 karakter"),
+    .min(1, "Nama pelanggan wajib diisi!")
+    .max(100, "Nama pelanggan tidak boleh lebih dari 100 karakter"),
+  paymentMethod: z.string().default("Cash"),
   listItemProduct: z
     .array(
       z.object({
@@ -16,11 +16,11 @@ export const AddOrderSchema = z.object({
       }),
     )
     .min(1, "List item produk wajib diisi!"),
-  inputPayment: z.number().min(1, "Kategori wajib diisi!"),
+  inputPayment: z.number().min(1, "Jumlah pembayaran wajib diisi!"),
 });
 
 export type validationAddOrder = z.infer<typeof AddOrderSchema>;
 
 export interface controlAddOrder {
-  control: Control<validationAddOrder>;
+  control: any;
 }

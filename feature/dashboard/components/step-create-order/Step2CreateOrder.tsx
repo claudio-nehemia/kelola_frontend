@@ -7,181 +7,261 @@ import {
   DialogDescription,
   DialogTitle,
 } from "@/components/ui/dialog";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
 import { FormField, FormItem } from "@/components/ui/form";
 import { SearchProduct } from "@/feature/_global/components/SearchProduct";
-import { controlAddOrder } from "@/schema/validation-add-order";
-import { useState } from "react";
+import { useProducts, ProductItem } from "@/hooks/useProducts";
+import { formatRupiah } from "@/feature/dashboard/helpers/formatRupuah";
+import { Plus, Minus, Trash2 } from "lucide-react";
+import { useState, useRef, useEffect } from "react";
 
-export function Step2CreateOrder({ control }: { control: controlAddOrder }) {
+interface OrderItem {
+  productId: string;
+  name: string;
+  price: number;
+  quantity: number;
+}
+
+export function Step2CreateOrder({ control }: { control: any }) {
   const { control: formControl } = control;
   const [searchValue, setSearchValue] = useState("");
+  const [showSuggestions, setShowSuggestions] = useState(false);
 
-  const [selectedProduct, setSelectedProduct] = useState<{
-    productId: string;
-    name: string;
-    price: number;
-  } | null>(null);
-  //   const [quantity, setQuantity] = useState<{ [key: string]: number }>({});
+  const { data: dbProducts = [], isLoading } = useProducts();
+
+  const [selectedProduct, setSelectedProduct] = useState<OrderItem | null>(null);
   const [quantity, setQuantity] = useState(1);
+  const [isModalOpen, setIsModalOpen] = useState(false);
 
-  const [isOpen, setIsOpen] = useState(false);
+  const containerRef = useRef<HTMLDivElement>(null);
 
-  const products = [
-    { productId: "1", name: "Big Mac", price: 25000 },
-    { productId: "2", name: "McChicken", price: 22000 },
-    { productId: "3", name: "French Fries", price: 15000 },
-    { productId: "4", name: "Coca Cola", price: 10000 },
-    { productId: "5", name: "McFlurry", price: 18000 },
-  ];
+  const availableProducts = dbProducts.filter((p) => p.stock > 0);
 
-  interface OrderItem {
-    productId: string;
-    name: string;
-    price: number;
-    quantity: number;
-  }
+  const filteredProducts = availableProducts.filter((p) =>
+    (p.name || p.productName || "").toLowerCase().includes(searchValue.toLowerCase())
+  );
+
+  useEffect(() => {
+    function handleClickOutside(event: MouseEvent) {
+      if (containerRef.current && !containerRef.current.contains(event.target as Node)) {
+        setShowSuggestions(false);
+      }
+    }
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
+
   return (
-    <>
-      <FormField
-        name="listItemProduct"
-        control={formControl}
-        render={({ field }) => {
-          const currentList: OrderItem[] = field.value || [];
+    <FormField
+      name="listItemProduct"
+      control={formControl}
+      render={({ field }) => {
+        const currentList: OrderItem[] = field.value || [];
 
-          const handleToCart = () => {
-            if (!selectedProduct || quantity <= 0) return;
+        const handleSelectProduct = (p: ProductItem) => {
+          setSelectedProduct({
+            productId: p.id,
+            name: p.name || p.productName || "",
+            price: p.sellPrice || p.priceSell || 0,
+            quantity: 1,
+          });
+          setQuantity(1);
+          setShowSuggestions(false);
+          setIsModalOpen(true);
+        };
 
-            const existingIndex = currentList.findIndex(
-              (item) => item.productId === selectedProduct.productId,
-            );
+        const handleAddToCart = () => {
+          if (!selectedProduct || quantity <= 0) return;
 
-            let updatedList: OrderItem[];
+          const existingIndex = currentList.findIndex(
+            (item) => item.productId === selectedProduct.productId
+          );
 
-            if (existingIndex >= 0) {
-              updatedList = [...currentList];
-              updatedList[existingIndex].quantity += quantity;
-            } else {
-              updatedList = [...currentList, { ...selectedProduct, quantity }];
-            }
+          let updatedList: OrderItem[];
 
-            field.onChange(updatedList);
+          if (existingIndex >= 0) {
+            updatedList = [...currentList];
+            updatedList[existingIndex].quantity += quantity;
+          } else {
+            updatedList = [...currentList, { ...selectedProduct, quantity }];
+          }
 
-            setSelectedProduct(null);
-            setQuantity(1);
-            setIsOpen(false);
-          };
-          return (
-            <FormItem className="w-full">
-              <DropdownMenu>
-                <DropdownMenuTrigger className="xl:w-88">
-                  <SearchProduct
-                    value={searchValue}
-                    setValue={setSearchValue}
-                  />
-                </DropdownMenuTrigger>
+          field.onChange(updatedList);
+          setSelectedProduct(null);
+          setQuantity(1);
+          setIsModalOpen(false);
+        };
 
-                <DropdownMenuContent className="max-h-50 scroll-auto gap-1">
-                  {products.map((product) => (
-                    <DropdownMenuItem key={product.productId}>
+        const handleUpdateItemQuantity = (productId: string, delta: number) => {
+          const updatedList = currentList
+            .map((item) => {
+              if (item.productId === productId) {
+                const newQty = item.quantity + delta;
+                return newQty > 0 ? { ...item, quantity: newQty } : null;
+              }
+              return item;
+            })
+            .filter((item): item is OrderItem => item !== null);
+
+          field.onChange(updatedList);
+        };
+
+        const handleRemoveItem = (productId: string) => {
+          const updatedList = currentList.filter((item) => item.productId !== productId);
+          field.onChange(updatedList);
+        };
+
+        const totalAmount = currentList.reduce(
+          (sum, item) => sum + item.price * item.quantity,
+          0
+        );
+
+        return (
+          <FormItem className="w-full">
+            <div ref={containerRef} className="relative w-full">
+              <div onFocus={() => setShowSuggestions(true)}>
+                <SearchProduct
+                  value={searchValue}
+                  setValue={(val) => {
+                    setSearchValue(val);
+                    setShowSuggestions(true);
+                  }}
+                  className="w-full max-w-full"
+                />
+              </div>
+
+              {showSuggestions && (
+                <div className="absolute top-12 left-0 right-0 z-50 bg-white border border-gray-200 rounded-md shadow-lg max-h-60 overflow-y-auto">
+                  {isLoading ? (
+                    <p className="p-3 text-xs text-gray-500 text-center">Memuat produk...</p>
+                  ) : filteredProducts.length === 0 ? (
+                    <p className="p-3 text-xs text-gray-500 text-center">
+                      {searchValue ? "Produk tidak ditemukan." : "Pilih atau cari produk..."}
+                    </p>
+                  ) : (
+                    filteredProducts.map((product) => (
                       <div
-                        onClick={() => {
-                          setSelectedProduct(product);
-                          setQuantity(1);
-                          setIsOpen(true);
-                        }}
+                        key={product.id}
+                        onClick={() => handleSelectProduct(product)}
+                        className="p-2.5 px-4 hover:bg-blue-50 cursor-pointer flex justify-between items-center border-b last:border-0 transition-colors"
                       >
-                        {product.name} - Rp {product.price.toLocaleString()}
-                      </div>
-                    </DropdownMenuItem>
-                  ))}
-                </DropdownMenuContent>
-              </DropdownMenu>
-
-              <Dialog open={isOpen} onOpenChange={setIsOpen}>
-                <DialogContent className="absolute left-8/11 w-96">
-                  <DialogTitle className="font-bold">
-                    {selectedProduct?.name || "Selected Product"}
-                  </DialogTitle>
-                  <DialogDescription>
-                    Tambahkan jumlah produk yang ingin Anda pesan.
-                  </DialogDescription>
-
-                  <div className="flex items-center gap-2 justify-center">
-                    <Button
-                      onClick={() => {
-                        setQuantity((prev) => Math.max(0, prev - 1));
-                      }}
-                    >
-                      -
-                    </Button>
-                    <span className="text-xl font-bold">{quantity}</span>
-                    <Button
-                      onClick={() => {
-                        setQuantity((prev) => Math.min(100, prev + 1));
-                      }}
-                    >
-                      +
-                    </Button>
-                  </div>
-                  <Button onClick={handleToCart}>Tambah ke Keranjang</Button>
-                </DialogContent>
-              </Dialog>
-
-              <div
-                id="selected-products"
-                className="flex flex-col items-start w-full justify-start mt-6"
-              >
-                <div className="flex justify-between w-full font-bold text-md mb-2 pr-3 items-center">
-                  <h2>List Pesanan</h2>
-                  <h2 className="font-semibold">Qty</h2>
-                </div>
-                {currentList.length === 0 && (
-                  <p className="text-gray-500">
-                    Belum ada produk yang dipilih.
-                  </p>
-                )}
-                {currentList.length > 0 && (
-                  <div className="w-full">
-                    {currentList.map((item) => (
-                      <div
-                        key={item.productId}
-                        className="flex justify-between xl:w-88 items-center py-1"
-                      >
-                        <div className="flex flex-col">
-                          <span className="font-bold">{item.name}</span>
-                          <span className="text-sm text-gray-600">
-                            Rp {item.price.toLocaleString()}
-                          </span>
+                        <div>
+                          <p className="font-semibold text-sm">{product.name || product.productName}</p>
+                          <p className="text-xs text-gray-500">Stok: {product.stock}</p>
                         </div>
-                        <span className="text-md mr-5 font-semibold">
-                          {item.quantity}
+                        <span className="text-sm font-bold text-blue-600">
+                          {formatRupiah(product.sellPrice || product.priceSell || 0)}
                         </span>
                       </div>
-                    ))}
-                  </div>
-                )}
-
-                <div className="mt-5">
-                  <span className="font-bold text-md">Total Harga:</span>
-                  <span className="font-bold text-md ml-2">
-                    Rp{" "}
-                    {currentList
-                      .map((item) => item.price * item.quantity)
-                      .reduce((a, b) => a + b, 0)
-                      .toLocaleString()}
-                  </span>
+                    ))
+                  )}
                 </div>
+              )}
+            </div>
+
+            <Dialog open={isModalOpen} onOpenChange={setIsModalOpen}>
+              <DialogContent className="w-96">
+                <DialogTitle className="font-bold">
+                  {selectedProduct?.name || "Jumlah Pesanan"}
+                </DialogTitle>
+                <DialogDescription>
+                  Masukkan jumlah unit yang ingin dipesan.
+                </DialogDescription>
+
+                <div className="flex items-center gap-4 justify-center py-4">
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="icon"
+                    onClick={() => setQuantity((prev) => Math.max(1, prev - 1))}
+                  >
+                    <Minus className="w-4 h-4" />
+                  </Button>
+                  <span className="text-2xl font-bold w-12 text-center">{quantity}</span>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="icon"
+                    onClick={() => setQuantity((prev) => Math.min(100, prev + 1))}
+                  >
+                    <Plus className="w-4 h-4" />
+                  </Button>
+                </div>
+                <Button type="button" onClick={handleAddToCart} className="w-full">
+                  Tambah ke Keranjang ({formatRupiah((selectedProduct?.price || 0) * quantity)})
+                </Button>
+              </DialogContent>
+            </Dialog>
+
+            <div className="flex flex-col items-start w-full justify-start mt-6 border-t pt-4">
+              <div className="flex justify-between w-full font-bold text-sm mb-2 items-center text-gray-700">
+                <h2>List Pesanan ({currentList.length})</h2>
+                <h2>Subtotal</h2>
               </div>
-            </FormItem>
-          );
-        }}
-      />
-    </>
+
+              {currentList.length === 0 ? (
+                <p className="text-gray-500 text-sm py-4 text-center w-full">
+                  Belum ada produk yang dipilih. Klik pencarian di atas untuk memilih produk.
+                </p>
+              ) : (
+                <div className="w-full space-y-2 max-h-52 overflow-y-auto pr-1">
+                  {currentList.map((item) => (
+                    <div
+                      key={item.productId}
+                      className="flex justify-between items-center py-2 px-3 bg-gray-50 rounded-md border"
+                    >
+                      <div className="flex flex-col">
+                        <span className="font-bold text-sm">{item.name}</span>
+                        <span className="text-xs text-gray-500">
+                          {formatRupiah(item.price)}
+                        </span>
+                      </div>
+
+                      <div className="flex items-center gap-3">
+                        <div className="flex items-center gap-1.5 border bg-white rounded px-1">
+                          <button
+                            type="button"
+                            onClick={() => handleUpdateItemQuantity(item.productId, -1)}
+                            className="p-1 hover:text-red-600 cursor-pointer"
+                          >
+                            <Minus className="w-3.5 h-3.5" />
+                          </button>
+                          <span className="font-semibold text-sm w-6 text-center">
+                            {item.quantity}
+                          </span>
+                          <button
+                            type="button"
+                            onClick={() => handleUpdateItemQuantity(item.productId, 1)}
+                            className="p-1 hover:text-green-600 cursor-pointer"
+                          >
+                            <Plus className="w-3.5 h-3.5" />
+                          </button>
+                        </div>
+
+                        <span className="font-bold text-sm min-w-[80px] text-right">
+                          {formatRupiah(item.price * item.quantity)}
+                        </span>
+
+                        <button
+                          type="button"
+                          onClick={() => handleRemoveItem(item.productId)}
+                          className="text-gray-400 hover:text-red-600 p-1 cursor-pointer"
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+
+              <div className="mt-4 pt-3 border-t w-full flex justify-between items-center font-bold text-base">
+                <span>Total Harga:</span>
+                <span className="text-blue-600 text-lg">{formatRupiah(totalAmount)}</span>
+              </div>
+            </div>
+          </FormItem>
+        );
+      }}
+    />
   );
 }

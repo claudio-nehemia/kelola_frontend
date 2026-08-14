@@ -8,6 +8,7 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 import { InputText } from "@/feature/_global/components/InputText";
+import { useCreateCategory } from "@/hooks/useCategories";
 import { BadgePlus } from "lucide-react";
 import { useState } from "react";
 import { z } from "zod";
@@ -19,12 +20,13 @@ const AddCategorySchema = z.object({
 export function AddCategory() {
   const [isOpen, setIsOpen] = useState(false);
   const [categoryName, setCategoryName] = useState("");
+  const createCategoryMutation = useCreateCategory();
   
   const [errors, setErrors] = useState<{
     categoryName?: string;
   }>({});
 
-  function handleSubmit() {
+  async function handleSubmit() {
     const result = AddCategorySchema.safeParse({
       categoryName: categoryName,
     });
@@ -37,7 +39,16 @@ export function AddCategory() {
       return;
     }
     setErrors({});
-    console.log("Submitted category name:", result.data);
+
+    try {
+      await createCategoryMutation.mutateAsync(result.data.categoryName);
+      setCategoryName("");
+      setIsOpen(false);
+    } catch (err: any) {
+      setErrors({
+        categoryName: err?.response?.data?.message || "Gagal membuat kategori",
+      });
+    }
   }
 
   return (
@@ -59,11 +70,15 @@ export function AddCategory() {
           className="mt-4"
         />
         {errors.categoryName && (
-          <p className="text-red-500">{errors.categoryName}</p>
+          <p className="text-red-500 text-sm mt-1">{errors.categoryName}</p>
         )}
 
-        <Button className="bg-primary mt-4" onClick={handleSubmit}>
-          Simpan
+        <Button
+          className="bg-primary mt-4"
+          onClick={handleSubmit}
+          disabled={createCategoryMutation.isPending}
+        >
+          {createCategoryMutation.isPending ? "Menyimpan..." : "Simpan"}
         </Button>
       </DialogContent>
     </Dialog>

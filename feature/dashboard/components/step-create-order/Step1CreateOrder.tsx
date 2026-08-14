@@ -5,9 +5,8 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import { InputText } from "@/feature/_global/components/InputText";
-import { controlAddOrder } from "@/schema/validation-add-order";
 
-export function Step1CreateOrder({ control }: { control: controlAddOrder }) {
+export function Step1CreateOrder({ control }: { control: any }) {
   const { control: formControl } = control;
   return (
     <FormField

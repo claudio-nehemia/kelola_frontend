@@ -1,3 +1,5 @@
+"use client";
+
 import {
   Select,
   SelectContent,
@@ -5,23 +7,22 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { useCategories } from "@/hooks/useCategories";
 
 export function OptionCategory({
   value,
   setValue,
   namingText,
   className,
+  includeAll = true,
 }: {
   value: string;
   setValue: (value: string) => void;
   namingText: string;
   className?: string;
+  includeAll?: boolean;
 }) {
-  const options = [
-    { id: "option1", label: "Option 1" },
-    { id: "option2", label: "Option 2" },
-    { id: "option3", label: "Option 3" },
-  ];
+  const { data: categories = [] } = useCategories();
 
   function handleChange(newValue: string | null) {
     if (newValue !== null) {
@@ -30,20 +31,23 @@ export function OptionCategory({
   }
 
   return (
-    <div className={`relative ${className}`}>
-      <p className="absolute -top-1.25 px-2 left-2 bg-white font-bold text-xs">
-        {namingText}
-      </p>
+    <div className={`relative ${className || ""}`}>
+      {namingText && (
+        <p className="absolute -top-1.25 px-2 left-2 bg-white font-bold text-xs z-10">
+          {namingText}
+        </p>
+      )}
 
       <Select value={value} onValueChange={handleChange}>
-        <SelectTrigger className={`${className} py-5`}>
+        <SelectTrigger className={`${className || ""} py-5`}>
           <SelectValue placeholder="Pilih Kategori" />
         </SelectTrigger>
 
-        <SelectContent className="top-12">
-          {options.map((opt) => (
-            <SelectItem key={opt.id} value={opt.id}>
-              {opt.label}
+        <SelectContent className="top-12 z-50">
+          {includeAll && <SelectItem value="all">Semua Kategori</SelectItem>}
+          {categories.map((cat) => (
+            <SelectItem key={cat.id} value={cat.id}>
+              {cat.name || cat.categoryName}
             </SelectItem>
           ))}
         </SelectContent>

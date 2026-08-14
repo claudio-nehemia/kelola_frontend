@@ -21,8 +21,8 @@ export const actionButtonClient = [
   {
     nameButton: "Kelola Produk",
     component: (
-      <Link href="/product-available">
-        <Button className="px-7 py-5">
+      <Link href="/manage-product">
+        <Button className="px-5 py-5 whitespace-nowrap">
           <PackageSearch />
           <p>Kelola Produk</p>
         </Button>

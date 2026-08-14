@@ -3,7 +3,7 @@ import { TableDataTransaction } from "@/feature/_global/components/TableDataTran
 
 export default function OverviewTransaction() {
   return (
-    <div className="flex space-x-15 w-full">
+    <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 w-full items-start">
       <ChartLineLinear />
       <TableDataTransaction />
     </div>

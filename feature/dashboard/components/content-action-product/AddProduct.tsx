@@ -8,48 +8,85 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
-import { AddProductSchema } from "@/schema/validation-add-product";
+import { AddProductSchema, validationAddProduct } from "@/schema/validation-add-product";
 import { FunnelPlus, SquarePen } from "lucide-react";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Form, FormField, FormItem } from "@/components/ui/form";
 import { InputText } from "@/feature/_global/components/InputText";
 import { OptionCategory } from "@/feature/_global/components/OptionCategory";
 import { InputNumber } from "@/feature/_global/components/InputNumber";
+import { useCreateProduct, useUpdateProduct, ProductItem } from "@/hooks/useProducts";
 
 export function AddProduct({
   mode,
+  initialData,
   className,
 }: {
   mode: "add" | "edit";
+  initialData?: ProductItem;
   className?: string;
 }) {
   const [isOpen, setIsOpen] = useState(false);
-  const form = useForm({
+  const [errorMessage, setErrorMessage] = useState("");
+
+  const createProductMutation = useCreateProduct();
+  const updateProductMutation = useUpdateProduct();
+
+  const form = useForm<validationAddProduct>({
     resolver: zodResolver(AddProductSchema),
     defaultValues: {
-      productName: "",
-      priceSell: 0,
-      cleanProfit: 0,
-      stock: 0,
-      category: "",
+      productName: initialData?.name || initialData?.productName || "",
+      priceSell: initialData?.sellPrice || initialData?.priceSell || 0,
+      cleanProfit: initialData?.cleanProfit || 0,
+      stock: initialData?.stock || 0,
+      category: initialData?.categoryId || initialData?.category?.id || "",
     },
   });
 
-  const { control, handleSubmit } = form;
+  const { control, handleSubmit, reset } = form;
+
+  useEffect(() => {
+    if (initialData) {
+      reset({
+        productName: initialData.name || initialData.productName || "",
+        priceSell: initialData.sellPrice || initialData.priceSell || 0,
+        cleanProfit: initialData.cleanProfit || (initialData.sellPrice - initialData.costPrice) || 0,
+        stock: initialData.stock || 0,
+        category: initialData.categoryId || initialData.category?.id || "",
+      });
+    }
+  }, [initialData, reset]);
+
+  async function onSubmit(data: validationAddProduct) {
+    setErrorMessage("");
+    try {
+      if (mode === "add") {
+        await createProductMutation.mutateAsync(data);
+      } else if (mode === "edit" && initialData?.id) {
+        await updateProductMutation.mutateAsync({ id: initialData.id, payload: data });
+      }
+      reset();
+      setIsOpen(false);
+    } catch (err: any) {
+      setErrorMessage(err?.response?.data?.message || "Gagal menyimpan produk");
+    }
+  }
+
+  const isPending = createProductMutation.isPending || updateProductMutation.isPending;
 
   return (
     <Dialog open={isOpen} onOpenChange={setIsOpen}>
       {mode === "add" && (
-        <DialogTrigger render={<Button className={`px-7 py-5 ${className}`} />}>
+        <DialogTrigger render={<Button className={`px-7 py-5 ${className || ""}`} />}>
           <FunnelPlus />
           <p>Tambah Produk</p>
         </DialogTrigger>
       )}
 
       {mode === "edit" && (
-        <DialogTrigger render={<Button className={`px-4 py-2 ${className}`} />}>
+        <DialogTrigger render={<Button className={`px-4 py-2 ${className || ""}`} />}>
           <SquarePen />
           <p>Edit Produk</p>
         </DialogTrigger>
@@ -66,7 +103,7 @@ export function AddProduct({
         </DialogDescription>
 
         <Form {...form}>
-          <form className="mt-4">
+          <form onSubmit={handleSubmit(onSubmit)} className="mt-4">
             <div className="space-y-4">
               <FormField
                 control={control}
@@ -89,7 +126,7 @@ export function AddProduct({
                   <FormItem>
                     <InputNumber
                       value={field.value}
-                      setValue={field.onChange}
+                      setValue={(val) => field.onChange(Number(val))}
                       namingText="Harga Jual"
                     />
                   </FormItem>
@@ -103,7 +140,7 @@ export function AddProduct({
                   <FormItem>
                     <InputNumber
                       value={field.value}
-                      setValue={field.onChange}
+                      setValue={(val) => field.onChange(Number(val))}
                       namingText="Keuntungan Bersih"
                     />
                   </FormItem>
@@ -121,6 +158,7 @@ export function AddProduct({
                         value={field.value}
                         setValue={field.onChange}
                         namingText="Kategori"
+                        includeAll={false}
                       />
                     </FormItem>
                   )}
@@ -133,7 +171,7 @@ export function AddProduct({
                     <FormItem>
                       <InputNumber
                         value={field.value}
-                        setValue={field.onChange}
+                        setValue={(val) => field.onChange(Number(val))}
                         namingText="Jumlah Stok"
                       />
                     </FormItem>
@@ -142,8 +180,12 @@ export function AddProduct({
               </div>
             </div>
 
-            <Button className="w-full mt-2" type="submit">
-              Simpan
+            {errorMessage && (
+              <p className="text-red-500 text-sm mt-2">{errorMessage}</p>
+            )}
+
+            <Button className="w-full mt-4" type="submit" disabled={isPending}>
+              {isPending ? "Menyimpan..." : "Simpan"}
             </Button>
           </form>
         </Form>

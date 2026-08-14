@@ -1,3 +1,5 @@
+"use client";
+
 import {
   Table,
   TableBody,
@@ -8,97 +10,66 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import Link from "next/link";
-
-const invoices = [
-  {
-    invoice: "INV001",
-    paymentStatus: "Paid",
-    totalAmount: "$250.00",
-    paymentMethod: "Credit Card",
-  },
-  {
-    invoice: "INV002",
-    paymentStatus: "Pending",
-    totalAmount: "$150.00",
-    paymentMethod: "PayPal",
-  },
-  {
-    invoice: "INV003",
-    paymentStatus: "Unpaid",
-    totalAmount: "$350.00",
-    paymentMethod: "Bank Transfer",
-  },
-  {
-    invoice: "INV004",
-    paymentStatus: "Paid",
-    totalAmount: "$450.00",
-    paymentMethod: "Credit Card",
-  },
-  {
-    invoice: "INV005",
-    paymentStatus: "Paid",
-    totalAmount: "$550.00",
-    paymentMethod: "PayPal",
-  },
-  {
-    invoice: "INV006",
-    paymentStatus: "Pending",
-    totalAmount: "$200.00",
-    paymentMethod: "Bank Transfer",
-  },
-  {
-    invoice: "INV007",
-    paymentStatus: "Pending",
-    totalAmount: "$200.00",
-    paymentMethod: "Bank Transfer",
-  },
-  {
-    invoice: "INV008",
-    paymentStatus: "Pending",
-    totalAmount: "$200.00",
-    paymentMethod: "Bank Transfer",
-  },
-];
+import { useTransactions } from "@/hooks/useTransactions";
+import { formatRupiah } from "@/feature/dashboard/helpers/formatRupuah";
 
 export function TableDataTransaction() {
+  const { data: transactions = [], isLoading } = useTransactions();
+
+  const recentTransactions = transactions.slice(0, 6);
+  const totalSum = transactions.reduce((sum, tx) => sum + (tx.totalAmount || 0), 0);
+
   return (
-    <div className="border-2 w-full rounded-md px-4">
+    <div className="border-2 w-full rounded-md px-4 py-2">
       <div className="p-2 flex justify-between items-center">
         <h1 className="text-lg font-bold mb-1">Tabel Transaksi</h1>
         <Link href="/detail-transaction">
-          <p className="text-blue-500 underline hover:cursor-pointer text-sm underline-offset-4 hover:text-blue-700">
+          <span className="text-blue-500 underline hover:cursor-pointer text-sm underline-offset-4 hover:text-blue-700 font-medium">
             selengkapnya
-          </p>
+          </span>
         </Link>
       </div>
-      <Table>
-        <TableHeader>
-          <TableRow>
-            <TableHead className="w-25">Invoice</TableHead>
-            <TableHead>Status</TableHead>
-            <TableHead>Method</TableHead>
-            <TableHead className="text-right">Amount</TableHead>
-          </TableRow>
-        </TableHeader>
-        <TableBody>
-          {invoices.map((invoice) => (
-            <TableRow key={invoice.invoice}>
-              <TableCell className="font-medium">{invoice.invoice}</TableCell>
-              <TableCell>{invoice.paymentStatus}</TableCell>
-              <TableCell>{invoice.paymentMethod}</TableCell>
-              <TableCell className="text-right">
-                {invoice.totalAmount}
-              </TableCell>
+
+      {isLoading ? (
+        <p className="text-gray-500 py-6 text-center text-sm">Memuat data transaksi...</p>
+      ) : recentTransactions.length === 0 ? (
+        <p className="text-gray-500 py-6 text-center text-sm">Belum ada data transaksi.</p>
+      ) : (
+        <Table>
+          <TableHeader>
+            <TableRow>
+              <TableHead className="w-24">Invoice</TableHead>
+              <TableHead>Customer</TableHead>
+              <TableHead>Status</TableHead>
+              <TableHead>Method</TableHead>
+              <TableHead className="text-right">Total</TableHead>
             </TableRow>
-          ))}
-        </TableBody>
-        <TableFooter>
-          <TableRow>
-            <TableCell colSpan={3}>Total</TableCell>
-            <TableCell className="text-right">$2,500.00</TableCell>
-          </TableRow>
-        </TableFooter>
-      </Table>
+          </TableHeader>
+          <TableBody>
+            {recentTransactions.map((tx) => (
+              <TableRow key={tx.id}>
+                <TableCell className="font-medium">{tx.invoice}</TableCell>
+                <TableCell>{tx.customerName}</TableCell>
+                <TableCell>
+                  <span className={`px-2 py-0.5 rounded text-xs font-semibold ${tx.status === "Paid" ? "bg-green-100 text-green-700" : "bg-yellow-100 text-yellow-700"}`}>
+                    {tx.status}
+                  </span>
+                </TableCell>
+                <TableCell>{tx.paymentMethod}</TableCell>
+                <TableCell className="text-right font-semibold">
+                  {formatRupiah(tx.totalAmount)}
+                </TableCell>
+              </TableRow>
+            ))}
+          </TableBody>
+          <TableFooter>
+            <TableRow>
+              <TableCell colSpan={4} className="font-bold">Total Transaksi ({transactions.length})</TableCell>
+              <TableCell className="text-right font-bold">{formatRupiah(totalSum)}</TableCell>
+            </TableRow>
+          </TableFooter>
+        </Table>
+      )}
     </div>
   );
 }

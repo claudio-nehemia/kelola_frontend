@@ -1,9 +1,15 @@
+"use client";
+
 import { CardProduct } from "@/feature/_global/components/CardProduct";
-import { dataBestSeller } from "../utils/dataDummy";
 import { NotebookTabs } from "lucide-react";
 import Link from "next/link";
+import { useProducts } from "@/hooks/useProducts";
 
 export function ProductAvailable() {
+  const { data: products = [], isLoading } = useProducts();
+
+  const availableProducts = products.filter((p) => p.stock > 0).slice(0, 10);
+
   return (
     <div className="space-y-2 mt-10">
       <div className="flex items-center gap-2">
@@ -11,25 +17,32 @@ export function ProductAvailable() {
           Produk Tersedia
         </h1>
         <Link href="/product-available">
-          <div className="flex text-blue-500 items-center">
+          <div className="flex text-blue-500 items-center hover:underline cursor-pointer">
             <NotebookTabs size={16} />
-            <p>Lihat Detail</p>
+            <p className="ml-1 text-sm font-medium">Lihat Detail</p>
           </div>
         </Link>
       </div>
 
-      <div className="grid grid-cols-5 gap-4">
-        {dataBestSeller.map((product) => (
-          <CardProduct
-            key={product.id}
-            productName={product.name}
-            priceSell={product.price}
-            cleanProfit={product.cleanProfit}
-            stock={product.stock}
-            category={product.category}
-          />
-        ))}
-      </div>
+      {isLoading ? (
+        <p className="text-gray-500 py-4">Memuat produk...</p>
+      ) : availableProducts.length === 0 ? (
+        <p className="text-gray-500 py-4">Tidak ada produk yang tersedia.</p>
+      ) : (
+        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 xl:grid-cols-5 gap-4">
+          {availableProducts.map((product) => (
+            <CardProduct
+              key={product.id}
+              productName={product.name || product.productName || ""}
+              priceSell={product.sellPrice || product.priceSell || 0}
+              cleanProfit={product.cleanProfit || (product.sellPrice - product.costPrice) || 0}
+              stock={product.stock}
+              category={product.category?.name || product.categoryName || "-"}
+              product={product}
+            />
+          ))}
+        </div>
+      )}
     </div>
   );
 }
