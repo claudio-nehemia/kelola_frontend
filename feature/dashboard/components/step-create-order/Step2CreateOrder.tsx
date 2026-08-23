@@ -17,6 +17,7 @@ import { FormField, FormItem } from "@/components/ui/form";
 import { SearchProduct } from "@/feature/_global/components/SearchProduct";
 import { controlAddOrder } from "@/schema/validation-add-order";
 import { useState } from "react";
+import { useGetAllProduct } from "../../action/useGetAllProduct";
 
 export function Step2CreateOrder({ control }: { control: controlAddOrder }) {
   const { control: formControl } = control;
@@ -24,32 +25,23 @@ export function Step2CreateOrder({ control }: { control: controlAddOrder }) {
 
   const [selectedProduct, setSelectedProduct] = useState<{
     productId: string;
-    name: string;
-    price: number;
   } | null>(null);
-  //   const [quantity, setQuantity] = useState<{ [key: string]: number }>({});
-  const [quantity, setQuantity] = useState(1);
 
   const [isOpen, setIsOpen] = useState(false);
+  const [active, setActive] = useState(false);
 
-  const products = [
-    { productId: "1", name: "Big Mac", price: 25000 },
-    { productId: "2", name: "McChicken", price: 22000 },
-    { productId: "3", name: "French Fries", price: 15000 },
-    { productId: "4", name: "Coca Cola", price: 10000 },
-    { productId: "5", name: "McFlurry", price: 18000 },
-  ];
+  const [quantity, setQuantity] = useState(1);
+  const { data: product } = useGetAllProduct({ search: searchValue });
 
   interface OrderItem {
     productId: string;
-    name: string;
-    price: number;
     quantity: number;
   }
+
   return (
     <>
       <FormField
-        name="listItemProduct"
+        name="productSells"
         control={formControl}
         render={({ field }) => {
           const currentList: OrderItem[] = field.value || [];
@@ -83,20 +75,23 @@ export function Step2CreateOrder({ control }: { control: controlAddOrder }) {
                   <SearchProduct
                     value={searchValue}
                     setValue={setSearchValue}
+                    active={active}
+                    setActive={setActive}
                   />
                 </DropdownMenuTrigger>
 
                 <DropdownMenuContent className="max-h-50 scroll-auto gap-1">
-                  {products.map((product) => (
-                    <DropdownMenuItem key={product.productId}>
+                  {product?.map((product) => (
+                    <DropdownMenuItem key={product.id}>
                       <div
                         onClick={() => {
-                          setSelectedProduct(product);
+                          setSelectedProduct({ productId: product.id });
                           setQuantity(1);
                           setIsOpen(true);
                         }}
                       >
-                        {product.name} - Rp {product.price.toLocaleString()}
+                        {product.name} - Rp{" "}
+                        {product.priceSell.toLocaleString("id-ID")}
                       </div>
                     </DropdownMenuItem>
                   ))}
@@ -106,7 +101,10 @@ export function Step2CreateOrder({ control }: { control: controlAddOrder }) {
               <Dialog open={isOpen} onOpenChange={setIsOpen}>
                 <DialogContent className="absolute left-8/11 w-96">
                   <DialogTitle className="font-bold">
-                    {selectedProduct?.name || "Selected Product"}
+                    {selectedProduct?.productId
+                      ? product!.find((p) => p.id === selectedProduct.productId)
+                          ?.name
+                      : "Selected Product"}
                   </DialogTitle>
                   <DialogDescription>
                     Tambahkan jumlah produk yang ingin Anda pesan.
@@ -154,9 +152,19 @@ export function Step2CreateOrder({ control }: { control: controlAddOrder }) {
                         className="flex justify-between xl:w-88 items-center py-1"
                       >
                         <div className="flex flex-col">
-                          <span className="font-bold">{item.name}</span>
+                          <span className="font-bold">
+                            {item.productId
+                              ? product!.find((p) => p.id === item.productId)
+                                  ?.name
+                              : "Product Not Found"}
+                          </span>
                           <span className="text-sm text-gray-600">
-                            Rp {item.price.toLocaleString()}
+                            Rp{" "}
+                            {item.productId
+                              ? product!
+                                  .find((p) => p.id === item.productId)
+                                  ?.priceSell.toLocaleString("id-ID")
+                              : "Price Not Found"}
                           </span>
                         </div>
                         <span className="text-md mr-5 font-semibold">
@@ -172,9 +180,17 @@ export function Step2CreateOrder({ control }: { control: controlAddOrder }) {
                   <span className="font-bold text-md ml-2">
                     Rp{" "}
                     {currentList
-                      .map((item) => item.price * item.quantity)
-                      .reduce((a, b) => a + b, 0)
-                      .toLocaleString()}
+                      .reduce((total, item) => {
+                        const selected = product?.find(
+                          (p) => p.id === item.productId,
+                        );
+
+                        return (
+                          total +
+                          (Number(selected?.priceSell) || 0) * item.quantity
+                        );
+                      }, 0)
+                      .toLocaleString("id-ID")}
                   </span>
                 </div>
               </div>

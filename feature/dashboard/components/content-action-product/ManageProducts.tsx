@@ -4,11 +4,11 @@ import { Dialog, DialogContent, DialogTrigger } from "@/components/ui/dialog";
 import { PackageSearch } from "lucide-react";
 import { useState } from "react";
 
-export function ManageProducts() {
+export function ManageProducts(className?: string) {
   const [isOpen, setIsOpen] = useState(false);
   return (
     <Dialog open={isOpen} onOpenChange={setIsOpen}>
-      <DialogTrigger render={<Button className=" px-7 py-5" />}>
+      <DialogTrigger render={<Button className={`px-7 py-5 ${className}`} />}>
         <PackageSearch />
         <p>Kelola Produk</p>
       </DialogTrigger>

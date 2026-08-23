@@ -1,11 +1,15 @@
 "use client";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { InputText } from "@/feature/_global/components/InputText";
 import { useState } from "react";
 import z from "zod";
+import { useActionLogin } from "../action/useActionLogin";
+import { toast } from "sonner";
 
 export function FormLogin() {
+  const { mutate: actionLogin } = useActionLogin();
+
   const validationSchema = z.object({
     username: z.string().min(1, { message: "username tidak boleh kosong" }),
     password: z.string().min(1, { message: "password tidak boleh kosong" }),
@@ -19,6 +23,23 @@ export function FormLogin() {
 
   function handleSubmit() {
     const result = validationSchema.safeParse({ username, password });
+
+    if (result.success) {
+      actionLogin(
+        { username, password },
+        {
+          onSuccess: () => {
+            toast.success("Login berhasil");
+          },
+          onError: () => {
+            toast.error(
+              "Login gagal, silahkan cek kembali username dan password anda",
+            );
+          },
+        },
+      );
+    }
+
     if (!result.success) {
       const fieldErrors = result.error.flatten().fieldErrors;
       setError({
@@ -29,7 +50,7 @@ export function FormLogin() {
   }
 
   return (
-    <Card className="xl:w-100 py-10">
+    <Card className="xl:w-100 py-7 border border-gray-400">
       <CardContent>
         <div className="flex flex-col gap-5">
           <div>

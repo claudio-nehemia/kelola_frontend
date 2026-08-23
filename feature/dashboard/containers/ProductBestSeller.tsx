@@ -11,6 +11,7 @@ export function ProductBestSeller() {
       <div className="grid grid-cols-5 gap-4">
         {dataBestSeller.map((product) => (
           <CardProduct
+            productId={product.id}
             key={product.id}
             productName={product.name}
             priceSell={product.price}

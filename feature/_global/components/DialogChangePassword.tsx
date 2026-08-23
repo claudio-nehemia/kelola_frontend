@@ -3,6 +3,8 @@ import { InputText } from "./InputText";
 import { Button } from "@/components/ui/button";
 import { useState } from "react";
 import { ChangePasswordSchema } from "@/schema/validation-change-password";
+import { useActionChangePassword } from "@/feature/auth/action/useActionChangePassword";
+import { toast } from "sonner";
 
 export function DialogChangePassword({
   isOpen,
@@ -11,34 +13,59 @@ export function DialogChangePassword({
   isOpen: boolean;
   setIsOpen: (isOpen: boolean) => void;
 }) {
-  const [currentPassword, setCurrentPassword] = useState("");
+  const { mutate: changePassword } = useActionChangePassword();
+
+  const [oldPassword, setOldPassword] = useState("");
   const [newPassword, setNewPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
 
   const [errors, setErrors] = useState<{
-    currentPassword: string;
+    oldPassword: string;
     newPassword: string;
     confirmPassword: string;
-  }>({
-    currentPassword: "",
-    newPassword: "",
-    confirmPassword: "",
-  });
+  }>();
 
-  function handleSumbit() {
+  function handleSubmit() {
     const submit = ChangePasswordSchema.safeParse({
-      currentPassword: currentPassword,
+      oldPassword: oldPassword,
       newPassword: newPassword,
       confirmPassword: confirmPassword,
     });
+
     if (!submit.success) {
       const fieldErrors = submit.error.flatten().fieldErrors;
       setErrors({
-        currentPassword: fieldErrors.currentPassword?.[0] || "",
-        newPassword: fieldErrors.newPassword?.[0] || "",
-        confirmPassword: fieldErrors.confirmPassword?.[0] || "",
+        oldPassword: fieldErrors?.oldPassword?.[0] || "",
+        newPassword: fieldErrors?.newPassword?.[0] || "",
+        confirmPassword: fieldErrors?.confirmPassword?.[0] || "",
       });
       return;
+    }
+
+    if (submit.success) {
+      changePassword(
+        {
+          data: {
+            oldPassword: oldPassword,
+            newPassword: newPassword,
+            confirmPassword: confirmPassword,
+          },
+        },
+        {
+          onSuccess: () => {
+            setOldPassword("");
+            setNewPassword("");
+            setConfirmPassword("");
+
+            toast.success("Password berhasil diubah");
+            setIsOpen(false);
+          },
+          onError: () => {
+            toast.error("Gagal mengubah password");
+          },
+        },
+      );
+      setIsOpen(false);
     }
   }
 
@@ -49,26 +76,43 @@ export function DialogChangePassword({
           Ubah Password
         </DialogTitle>
 
-        <InputText
-          namingText="Password Saat Ini"
-          type="password"
-          value={currentPassword}
-          setValue={setCurrentPassword}
-        />
-        <InputText
-          namingText="Password Baru"
-          type="password"
-          value={newPassword}
-          setValue={setNewPassword}
-        />
-        <InputText
-          namingText="Konfirmasi Password Baru"
-          type="password"
-          value={confirmPassword}
-          setValue={setConfirmPassword}
-        />
+        <div className="flex flex-col gap-2">
+          <InputText
+            namingText="Password Saat Ini"
+            type="password"
+            value={oldPassword}
+            setValue={setOldPassword}
+          />
+          {errors?.oldPassword && (
+            <p className="text-xs text-red-500">{errors.oldPassword}</p>
+          )}
+        </div>
 
-        <Button onClick={handleSumbit}>Simpan Password Baru</Button>
+        <div className="flex flex-col gap-2">
+          <InputText
+            namingText="Password Baru"
+            type="password"
+            value={newPassword}
+            setValue={setNewPassword}
+          />
+          {errors?.newPassword && (
+            <p className="text-xs text-red-500">{errors.newPassword}</p>
+          )}
+        </div>
+
+        <div className="flex flex-col gap-2">
+          <InputText
+            namingText="Konfirmasi Password Baru"
+            type="password"
+            value={confirmPassword}
+            setValue={setConfirmPassword}
+          />
+          {errors?.confirmPassword && (
+            <p className="text-xs text-red-500">{errors.confirmPassword}</p>
+          )}
+        </div>
+
+        <Button onClick={handleSubmit}>Simpan Password Baru</Button>
       </DialogContent>
     </Dialog>
   );

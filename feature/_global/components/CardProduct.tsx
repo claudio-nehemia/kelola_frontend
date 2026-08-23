@@ -14,12 +14,14 @@ import Image from "next/image";
 import { useState } from "react";
 
 export function CardProduct({
+  productId,
   productName,
   priceSell,
   cleanProfit,
   stock,
   category,
 }: {
+  productId: string;
   productName: string;
   priceSell: number;
   cleanProfit: number;
@@ -41,7 +43,7 @@ export function CardProduct({
           unoptimized
         />
         <CardContent>
-          <h3 className="font-bold">{productName}</h3>
+          <h3 className="font-bold line-clamp-1">{productName}</h3>
           <p className="text-lg">{formatRupiah(priceSell)}</p>
         </CardContent>
       </Card>
@@ -70,7 +72,19 @@ export function CardProduct({
             </p>
 
             <div className="flex justify-end">
-              <AddProduct mode="edit" />
+              <AddProduct
+                mode="edit"
+                editMode={{
+                  productId: productId,
+                  data: {
+                    name: productName,
+                    priceSell,
+                    profit: cleanProfit,
+                    stock,
+                    categoryId: category,
+                  },
+                }}
+              />
             </div>
           </div>
         </DialogContent>

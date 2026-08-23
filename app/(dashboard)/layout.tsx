@@ -11,6 +11,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { DialogChangePassword } from "@/feature/_global/components/DialogChangePassword";
 import { Footer } from "@/feature/_global/components/Footer";
+import { useActionLogout } from "@/feature/auth/action/useActionLogout";
 import { TextAlignJustify } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
@@ -19,6 +20,8 @@ import { ReactNode, useState } from "react";
 export function DashboardLayout({ children }: { children: ReactNode }) {
   const [isOpenDialogChangePassword, setIsOpenDialogChangePassword] =
     useState(false);
+
+  const { mutate: actionLogout } = useActionLogout();
   return (
     <>
       <div className="flex flex-col w-full min-h-screen">
@@ -49,6 +52,7 @@ export function DashboardLayout({ children }: { children: ReactNode }) {
                   </DropdownMenuItem>
                   <DropdownMenuItem
                     className={`bg-red-500 font-bold text-white`}
+                    onClick={() => actionLogout()}
                   >
                     Log Out
                   </DropdownMenuItem>

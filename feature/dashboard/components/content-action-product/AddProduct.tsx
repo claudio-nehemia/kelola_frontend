@@ -8,7 +8,10 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
-import { AddProductSchema } from "@/schema/validation-add-product";
+import {
+  AddProductSchema,
+  validationAddProduct,
+} from "@/schema/validation-add-product";
 import { FunnelPlus, SquarePen } from "lucide-react";
 import { useState } from "react";
 import { useForm } from "react-hook-form";
@@ -17,27 +20,71 @@ import { Form, FormField, FormItem } from "@/components/ui/form";
 import { InputText } from "@/feature/_global/components/InputText";
 import { OptionCategory } from "@/feature/_global/components/OptionCategory";
 import { InputNumber } from "@/feature/_global/components/InputNumber";
+import { useActionAddProduct } from "../../action/useActionAddProduct";
+import { toast } from "sonner";
+import { useQueryClient } from "@tanstack/react-query";
+import { useActionUpdateProduct } from "../../action/useActionUpdateProduct";
 
 export function AddProduct({
   mode,
   className,
+  editMode,
 }: {
   mode: "add" | "edit";
   className?: string;
+  editMode?: {
+    productId: string;
+    data: validationAddProduct;
+  };
 }) {
   const [isOpen, setIsOpen] = useState(false);
+
   const form = useForm({
     resolver: zodResolver(AddProductSchema),
     defaultValues: {
-      productName: "",
-      priceSell: 0,
-      cleanProfit: 0,
-      stock: 0,
-      category: "",
+      name: editMode?.data.name || "",
+      priceSell: editMode?.data.priceSell || 0,
+      profit: editMode?.data.profit || 0,
+      stock: editMode?.data.stock || 0,
+      categoryId: "",
     },
+  });
+  const queryClient = useQueryClient();
+
+  const { mutate: actionAddProduct } = useActionAddProduct();
+  const { mutate: actionEditProduct } = useActionUpdateProduct({
+    productId: editMode?.productId || "",
   });
 
   const { control, handleSubmit } = form;
+
+  const actionForm = mode === "add" ? actionAddProduct : actionEditProduct;
+
+  function onSubmit(values: validationAddProduct) {
+    const formData = new FormData();
+    formData.append("name", values.name);
+    formData.append("priceSell", values.priceSell.toString());
+    formData.append("profit", values.profit.toString());
+    formData.append("stock", values.stock.toString());
+    formData.append("categoryId", values.categoryId);
+
+    actionForm(values, {
+      onSuccess: () => {
+        queryClient.invalidateQueries({
+          queryKey: ["get10ProductsNotAvailable"],
+        });
+        queryClient.invalidateQueries({
+          queryKey: ["get10ProductsAvailable"],
+        });
+        setIsOpen(false);
+        toast.success("Produk berhasil ditambahkan");
+        form.reset();
+      },
+      onError: () => {
+        toast.error("Produk gagal ditambahkan");
+      },
+    });
+  }
 
   return (
     <Dialog open={isOpen} onOpenChange={setIsOpen}>
@@ -66,11 +113,11 @@ export function AddProduct({
         </DialogDescription>
 
         <Form {...form}>
-          <form className="mt-4">
+          <form className="mt-4" onSubmit={handleSubmit(onSubmit)}>
             <div className="space-y-4">
               <FormField
                 control={control}
-                name="productName"
+                name="name"
                 render={({ field }) => (
                   <FormItem>
                     <InputText
@@ -98,7 +145,7 @@ export function AddProduct({
 
               <FormField
                 control={control}
-                name="cleanProfit"
+                name="profit"
                 render={({ field }) => (
                   <FormItem>
                     <InputNumber
@@ -113,7 +160,7 @@ export function AddProduct({
               <div className="flex gap-2">
                 <FormField
                   control={control}
-                  name="category"
+                  name="categoryId"
                   render={({ field }) => (
                     <FormItem>
                       <OptionCategory

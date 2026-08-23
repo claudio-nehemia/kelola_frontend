@@ -1,3 +1,4 @@
+import { Button } from "@/components/ui/button";
 import {
   Table,
   TableBody,
@@ -7,95 +8,80 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import Link from "next/link";
+import { DetailTransaction } from "@/feature/dashboard/components/DetailTransaction";
+import { formatRupiah } from "@/feature/dashboard/helpers/formatRupuah";
+import { Info } from "lucide-react";
 
-const invoices = [
-  {
-    invoice: "INV001",
-    paymentStatus: "Paid",
-    totalAmount: "$250.00",
-    paymentMethod: "Credit Card",
-  },
-  {
-    invoice: "INV002",
-    paymentStatus: "Pending",
-    totalAmount: "$150.00",
-    paymentMethod: "PayPal",
-  },
-  {
-    invoice: "INV003",
-    paymentStatus: "Unpaid",
-    totalAmount: "$350.00",
-    paymentMethod: "Bank Transfer",
-  },
-  {
-    invoice: "INV004",
-    paymentStatus: "Paid",
-    totalAmount: "$450.00",
-    paymentMethod: "Credit Card",
-  },
-  {
-    invoice: "INV005",
-    paymentStatus: "Paid",
-    totalAmount: "$550.00",
-    paymentMethod: "PayPal",
-  },
-  {
-    invoice: "INV006",
-    paymentStatus: "Pending",
-    totalAmount: "$200.00",
-    paymentMethod: "Bank Transfer",
-  },
-  {
-    invoice: "INV007",
-    paymentStatus: "Pending",
-    totalAmount: "$200.00",
-    paymentMethod: "Bank Transfer",
-  },
-  {
-    invoice: "INV008",
-    paymentStatus: "Pending",
-    totalAmount: "$200.00",
-    paymentMethod: "Bank Transfer",
-  },
-];
+interface transactionHighlight {
+  transactionId: string;
+  pelanggan: string;
+  tanggal: string;
+  productDetail: string[];
+  priceSell: number;
+  profitSell: number;
+}
 
-export function TableDataTransaction() {
+export function TableDataTransaction({
+  dataTransaction,
+}: {
+  dataTransaction: transactionHighlight[];
+}) {
+  const totalPenjualan = dataTransaction.reduce(
+    (acc, curr) => acc + curr.priceSell,
+    0,
+  );
+
+  const totalProfit = dataTransaction.reduce(
+    (acc, curr) => acc + curr.profitSell,
+    0,
+  );
+
   return (
-    <div className="border-2 w-full rounded-md px-4">
-      <div className="p-2 flex justify-between items-center">
-        <h1 className="text-lg font-bold mb-1">Tabel Transaksi</h1>
-        <Link href="/detail-transaction">
-          <p className="text-blue-500 underline hover:cursor-pointer text-sm underline-offset-4 hover:text-blue-700">
-            selengkapnya
-          </p>
-        </Link>
-      </div>
+    <div className="flex w-325 px-7 py-3 justify-center border-2 rounded-lg">
       <Table>
         <TableHeader>
           <TableRow>
-            <TableHead className="w-25">Invoice</TableHead>
-            <TableHead>Status</TableHead>
-            <TableHead>Method</TableHead>
-            <TableHead className="text-right">Amount</TableHead>
+            <TableHead className="w-25">No</TableHead>
+            <TableHead>Pelanggan</TableHead>
+            <TableHead>Tanggal</TableHead>
+            <TableHead>Total Transaksi (Rp)</TableHead>
+            <TableHead>Keuntungan Bersih (Rp)</TableHead>
+            <TableHead className="text-right">Detail</TableHead>
           </TableRow>
         </TableHeader>
+
         <TableBody>
-          {invoices.map((invoice) => (
-            <TableRow key={invoice.invoice}>
-              <TableCell className="font-medium">{invoice.invoice}</TableCell>
-              <TableCell>{invoice.paymentStatus}</TableCell>
-              <TableCell>{invoice.paymentMethod}</TableCell>
+          {dataTransaction.map((d) => (
+            <TableRow key={d.transactionId}>
+              <TableCell className="font-medium">{d.transactionId}</TableCell>
+              <TableCell>{d.pelanggan}</TableCell>
+              <TableCell>{d.tanggal}</TableCell>
+              <TableCell>{d.priceSell}</TableCell>
+              <TableCell>{d.profitSell}</TableCell>
               <TableCell className="text-right">
-                {invoice.totalAmount}
+                <DetailTransaction
+                  namaPelanggan={d.pelanggan}
+                  detailTransaksi={d.productDetail}
+                  totalTransaksi={d.priceSell}
+                  totalKeuntungan={d.profitSell}
+                />
               </TableCell>
             </TableRow>
           ))}
         </TableBody>
+
         <TableFooter>
           <TableRow>
-            <TableCell colSpan={3}>Total</TableCell>
-            <TableCell className="text-right">$2,500.00</TableCell>
+            <TableCell colSpan={5}>Total Penjualan</TableCell>
+            <TableCell className="text-right">
+              {formatRupiah(totalPenjualan)}
+            </TableCell>
+          </TableRow>
+          <TableRow>
+            <TableCell colSpan={5}>Total Keuntungan</TableCell>
+            <TableCell className="text-right">
+              {formatRupiah(totalProfit)}
+            </TableCell>
           </TableRow>
         </TableFooter>
       </Table>

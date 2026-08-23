@@ -19,8 +19,8 @@ export function FooterCreateOrder({
       >
         Kembali
       </Button>
-      {step === 4 ? (
-        <Button className=" w-42" onClick={nextStep}>
+      {step === 3 ? (
+        <Button className=" w-42" onClick={nextStep} type="submit">
           Simpan
         </Button>
       ) : (
