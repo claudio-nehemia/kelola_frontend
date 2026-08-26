@@ -7,6 +7,16 @@ export const API_ENDPOINTS = {
     LOGOUT: "/api/auth/logout",
     CHANGE_PASSWORD: "/api/auth/change-password",
   },
+  ADMIN: {
+    STATS: "/api/admin/stats",
+    PRICING: "/api/admin/pricing",
+    CONTRACTS: "/api/admin/contracts",
+    KASIR_LIST: "/api/admin/kasir",
+    CREATE_KASIR: "/api/admin/kasir",
+    EXTEND_KASIR: (id: string) => `/api/admin/kasir/${id}/extend`,
+    TERMINATE_KASIR: (id: string) => `/api/admin/kasir/${id}/terminate`,
+    MONITOR_KASIR: (id: string) => `/api/admin/kasir/${id}/monitor`,
+  },
   USERS: {
     GET_ALL: "/api/users",
     CREATE: "/api/users",

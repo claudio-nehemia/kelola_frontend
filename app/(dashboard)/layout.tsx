@@ -13,15 +13,17 @@ import {
 import { DialogChangePassword } from "@/feature/_global/components/DialogChangePassword";
 import { Footer } from "@/feature/_global/components/Footer";
 import { useActionLogout } from "@/feature/auth/action/useActionLogout";
+import { useAuthStore } from "@/state/authStore";
 import {
+  AlertTriangle,
   KeyRound,
   LayoutDashboard,
   LogOut,
   PackageSearch,
   ReceiptText,
+  ShieldCheck,
+  Store,
   TextAlignJustify,
-  UserCog,
-  Users,
 } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
@@ -34,33 +36,79 @@ export function DashboardLayout({ children }: { children: ReactNode }) {
 
   const pathname = usePathname();
   const { mutate: actionLogout } = useActionLogout();
+  const user = useAuthStore((state) => state.data);
 
   const navLinks = [
-    { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
+    { href: "/dashboard", label: "Buat Pesanan (POS)", icon: LayoutDashboard },
     { href: "/manage-product", label: "Kelola Produk", icon: PackageSearch },
     { href: "/detail-transaction", label: "Transaksi", icon: ReceiptText },
-    { href: "/users", label: "Pengguna & Staf", icon: Users },
   ];
+
+  const isSuperAdmin = user?.role === "SUPER_ADMIN";
+  const daysRemaining = user?.daysRemaining;
+  const showH10Warning =
+    !isSuperAdmin &&
+    daysRemaining !== undefined &&
+    daysRemaining !== null &&
+    daysRemaining <= 10;
 
   return (
     <>
       <div className="flex flex-col w-full min-h-screen bg-slate-50/50">
+        {/* H-10 Warning Banner for Admin Kasir */}
+        {showH10Warning && (
+          <div className="w-full bg-amber-500 text-slate-950 font-bold px-4 py-2.5 flex items-center justify-center gap-2 text-xs sm:text-sm text-center shadow-md animate-pulse">
+            <AlertTriangle size={18} className="shrink-0" />
+            <span>
+              Peringatan Kontrak: Masa aktif toko Anda tersisa{" "}
+              <strong className="underline font-extrabold">
+                {daysRemaining} hari lagi
+              </strong>
+              . Segera hubungi Super Admin untuk perpanjangan kontrak agar operasional kasir tetap aktif!
+            </span>
+          </div>
+        )}
+
+        {/* Super Admin Top Switch Banner */}
+        {isSuperAdmin && (
+          <div className="w-full bg-slate-900 text-slate-200 px-4 py-1.5 flex items-center justify-between text-xs border-b border-slate-700">
+            <span className="flex items-center gap-1.5 font-semibold text-amber-400">
+              <ShieldCheck size={14} />
+              Anda sedang melihat POS Toko sebagai Super Admin
+            </span>
+            <Link
+              href="/admin/dashboard"
+              className="text-white hover:underline font-bold bg-blue-700 hover:bg-blue-600 px-2.5 py-0.5 rounded text-[11px]"
+            >
+              Kembali ke Super Admin Panel &rarr;
+            </Link>
+          </div>
+        )}
+
         {/* Navigation Bar */}
         <header className="w-full bg-[#041336] shadow-md sticky top-0 z-40">
           <div className="max-w-7xl mx-auto flex h-16 items-center justify-between px-4 md:px-8">
-            {/* Logo Brand */}
-            <Link href="/dashboard" className="flex items-center gap-2">
-              <Image
-                src="/logoputihkelolatoko.png"
-                alt="Logo Kelola Toko"
-                width={150}
-                height={80}
-                className="object-contain hover:opacity-95 transition-opacity"
-              />
-            </Link>
+            {/* Logo & Store Name */}
+            <div className="flex items-center gap-3">
+              <Link href="/dashboard" className="flex items-center gap-2">
+                <Image
+                  src="/logoputihkelolatoko.png"
+                  alt="Logo Kelola Toko"
+                  width={140}
+                  height={75}
+                  className="object-contain hover:opacity-95 transition-opacity"
+                />
+              </Link>
+              {user?.storeName && (
+                <span className="hidden sm:inline-flex items-center gap-1 px-2.5 py-1 rounded bg-white/10 text-white text-xs font-semibold">
+                  <Store size={13} className="text-amber-300" />
+                  {user.storeName}
+                </span>
+              )}
+            </div>
 
             {/* Desktop Navigation Links */}
-            <nav className="hidden lg:flex items-center gap-1">
+            <nav className="hidden md:flex items-center gap-1">
               {navLinks.map((link) => {
                 const Icon = link.icon;
                 const isActive = pathname === link.href;
@@ -100,7 +148,7 @@ export function DashboardLayout({ children }: { children: ReactNode }) {
                 <DropdownMenuContent className="w-56" align="end">
                   <DropdownMenuGroup>
                     <DropdownMenuLabel className="text-xs font-semibold text-gray-500">
-                      Navigasi Cepat
+                      Navigasi Kasir
                     </DropdownMenuLabel>
                     <DropdownMenuItem className="cursor-pointer">
                       <Link
@@ -108,7 +156,7 @@ export function DashboardLayout({ children }: { children: ReactNode }) {
                         className="flex items-center gap-2 w-full"
                       >
                         <LayoutDashboard size={15} />
-                        <span>Dashboard</span>
+                        <span>Buat Pesanan (POS)</span>
                       </Link>
                     </DropdownMenuItem>
                     <DropdownMenuItem className="cursor-pointer">
@@ -117,7 +165,7 @@ export function DashboardLayout({ children }: { children: ReactNode }) {
                         className="flex items-center gap-2 w-full"
                       >
                         <PackageSearch size={15} />
-                        <span>Kelola Produk</span>
+                        <span>Kelola Produk Toko</span>
                       </Link>
                     </DropdownMenuItem>
                     <DropdownMenuItem className="cursor-pointer">
@@ -129,22 +177,13 @@ export function DashboardLayout({ children }: { children: ReactNode }) {
                         <span>Detail Transaksi</span>
                       </Link>
                     </DropdownMenuItem>
-                    <DropdownMenuItem className="cursor-pointer">
-                      <Link
-                        href="/users"
-                        className="flex items-center gap-2 w-full"
-                      >
-                        <UserCog size={15} />
-                        <span>Manajemen Pengguna</span>
-                      </Link>
-                    </DropdownMenuItem>
                   </DropdownMenuGroup>
 
                   <DropdownMenuSeparator />
 
                   <DropdownMenuGroup>
                     <DropdownMenuLabel className="text-xs font-semibold text-gray-500">
-                      Akun & Keamanan
+                      Akun
                     </DropdownMenuLabel>
                     <DropdownMenuItem
                       className="cursor-pointer flex items-center gap-2"
