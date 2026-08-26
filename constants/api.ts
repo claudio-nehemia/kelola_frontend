@@ -7,6 +7,13 @@ export const API_ENDPOINTS = {
     LOGOUT: "/api/auth/logout",
     CHANGE_PASSWORD: "/api/auth/change-password",
   },
+  USERS: {
+    GET_ALL: "/api/users",
+    CREATE: "/api/users",
+    GET_BY_ID: (id: string) => `/api/users/${id}`,
+    UPDATE: (id: string) => `/api/users/${id}`,
+    DELETE: (id: string) => `/api/users/${id}`,
+  },
   PRODUCT: {
     get10ProductsAvailable: "/api/products",
     get10ProductsNotAvailable: "/api/products",
