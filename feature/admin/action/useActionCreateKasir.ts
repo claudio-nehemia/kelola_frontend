@@ -12,6 +12,7 @@ export function useActionCreateKasir() {
       phone?: string;
       durationMonths?: number;
       notes?: string;
+      isDraft?: boolean;
     }) => {
       return await adminService.createKasir(data);
     },

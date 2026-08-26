@@ -66,6 +66,7 @@ export const adminService = {
     phone?: string;
     durationMonths?: number;
     notes?: string;
+    isDraft?: boolean;
   }) => {
     const response = await apiClient.post(
       API_ENDPOINTS.ADMIN.CREATE_KASIR,

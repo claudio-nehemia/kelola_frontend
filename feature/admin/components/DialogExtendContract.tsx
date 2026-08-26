@@ -17,7 +17,7 @@ import {
 } from "@/components/ui/select";
 import { formatRupiah } from "@/feature/dashboard/helpers/formatRupuah";
 import { useQueryClient } from "@tanstack/react-query";
-import { CalendarClock } from "lucide-react";
+import { CalendarClock, Zap } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
 import { useActionExtendContract } from "../action/useActionExtendContract";
@@ -42,6 +42,10 @@ export function DialogExtendContract({
     userId: kasir?.id || "",
   });
 
+  const isDraft =
+    kasir?.contractStatus === "draft" ||
+    (!kasir?.contractStart && !kasir?.contractEnd);
+
   const monthlyPrice = pricing?.monthlyPrice || 150000;
   const totalFee = Number(durationMonths) * monthlyPrice;
 
@@ -52,7 +56,11 @@ export function DialogExtendContract({
     extendContract(
       {
         durationMonths: Number(durationMonths) || 1,
-        notes: notes || `Perpanjangan kontrak ${durationMonths} bulan`,
+        notes:
+          notes ||
+          (isDraft
+            ? `Aktivasi kontrak awal ${durationMonths} bulan`
+            : `Perpanjangan kontrak ${durationMonths} bulan`),
       },
       {
         onSuccess: () => {
@@ -60,14 +68,16 @@ export function DialogExtendContract({
           queryClient.invalidateQueries({ queryKey: ["getAdminStats"] });
           queryClient.invalidateQueries({ queryKey: ["getContracts"] });
           toast.success(
-            `Kontrak toko "${kasir.storeName || kasir.name}" berhasil diperpanjang ${durationMonths} bulan!`,
+            isDraft
+              ? `Kontrak toko "${kasir.storeName || kasir.name}" berhasil diaktifkan selama ${durationMonths} bulan!`
+              : `Kontrak toko "${kasir.storeName || kasir.name}" berhasil diperpanjang ${durationMonths} bulan!`,
           );
           setNotes("");
           setIsOpen(false);
         },
         onError: (err: any) => {
           const msg =
-            err?.response?.data?.message || "Gagal memperpanjang kontrak";
+            err?.response?.data?.message || "Gagal memproses kontrak";
           toast.error(msg);
         },
       },
@@ -80,22 +90,24 @@ export function DialogExtendContract({
         month: "long",
         year: "numeric",
       })
-    : "Belum diset";
+    : "Draft (Belum Aktif)";
 
   return (
     <Dialog open={isOpen} onOpenChange={setIsOpen}>
       <DialogContent className="max-w-md">
         <div className="flex items-center gap-2.5 text-blue-700">
           <div className="p-2 rounded-full bg-blue-100">
-            <CalendarClock size={22} />
+            {isDraft ? <Zap size={22} className="text-green-600" /> : <CalendarClock size={22} />}
           </div>
           <DialogTitle className="font-bold text-lg text-[#041336]">
-            Perpanjang Masa Aktif Kontrak
+            {isDraft ? "Aktivasi Kontrak Toko Kasir" : "Perpanjang Masa Aktif Kontrak"}
           </DialogTitle>
         </div>
 
         <DialogDescription className="text-xs text-gray-600 mt-1">
-          Tambahkan masa aktif langganan toko untuk akun kasir ini.
+          {isDraft
+            ? "Pilih durasi kontrak awal untuk mengaktifkan akun toko kasir ini agar dapat login dan digunakan."
+            : "Tambahkan masa aktif langganan toko untuk akun kasir ini."}
         </DialogDescription>
 
         <form onSubmit={handleSubmit} className="space-y-4 mt-2">
@@ -109,20 +121,16 @@ export function DialogExtendContract({
               <span className="font-mono text-gray-700">@{kasir?.username}</span>
             </div>
             <div className="flex justify-between">
-              <span className="text-gray-500">Berakhir Pada:</span>
-              <strong className="text-blue-700">{currentEndDate}</strong>
-            </div>
-            <div className="flex justify-between">
-              <span className="text-gray-500">Sisa Hari:</span>
-              <span className="font-bold text-amber-600">
-                {kasir?.daysRemaining || 0} Hari
-              </span>
+              <span className="text-gray-500">Status Saat Ini:</span>
+              <strong className={isDraft ? "text-amber-600" : "text-blue-700"}>
+                {currentEndDate}
+              </strong>
             </div>
           </div>
 
           <div className="space-y-1.5">
             <label className="text-xs font-semibold text-gray-700">
-              Pilih Tambahan Durasi
+              Pilih Durasi Kontrak
             </label>
             <Select
               value={durationMonths}
@@ -132,17 +140,19 @@ export function DialogExtendContract({
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="1">+1 Bulan</SelectItem>
-                <SelectItem value="3">+3 Bulan</SelectItem>
-                <SelectItem value="6">+6 Bulan</SelectItem>
-                <SelectItem value="12">+12 Bulan (1 Tahun)</SelectItem>
+                <SelectItem value="1">1 Bulan</SelectItem>
+                <SelectItem value="3">3 Bulan</SelectItem>
+                <SelectItem value="6">6 Bulan</SelectItem>
+                <SelectItem value="12">12 Bulan (1 Tahun)</SelectItem>
               </SelectContent>
             </Select>
           </div>
 
           <div className="p-3 bg-green-50 border border-green-200 rounded-lg flex justify-between items-center">
             <div>
-              <p className="text-xs text-green-800">Biaya Perpanjangan</p>
+              <p className="text-xs text-green-800">
+                {isDraft ? "Biaya Aktivasi Kontrak" : "Biaya Perpanjangan"}
+              </p>
               <p className="text-xs text-gray-500">
                 {durationMonths} bln × {formatRupiah(monthlyPrice)}
               </p>
@@ -175,9 +185,17 @@ export function DialogExtendContract({
             <Button
               type="submit"
               disabled={isPending}
-              className="bg-blue-600 hover:bg-blue-500 text-white font-bold px-5"
+              className={`${
+                isDraft
+                  ? "bg-green-600 hover:bg-green-500"
+                  : "bg-blue-600 hover:bg-blue-500"
+              } text-white font-bold px-5`}
             >
-              {isPending ? "Memproses..." : "Konfirmasi Perpanjangan"}
+              {isPending
+                ? "Memproses..."
+                : isDraft
+                ? "Aktifkan Kontrak Sekarang"
+                : "Konfirmasi Perpanjangan"}
             </Button>
           </div>
         </form>

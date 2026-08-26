@@ -34,6 +34,7 @@ function KasirManagementContent() {
   const filterTabs = [
     { id: "all", label: "Semua Toko Kasir" },
     { id: "active", label: "Aktif" },
+    { id: "draft", label: "Draft" },
     { id: "warning_h10", label: "Hampir Habis (H-10)" },
     { id: "expired", label: "Kadaluarsa" },
     { id: "terminated", label: "Putus Kontrak" },
@@ -48,7 +49,7 @@ function KasirManagementContent() {
             Manajemen Toko & Admin Kasir
           </h1>
           <p className="text-xs sm:text-sm text-gray-500 mt-0.5">
-            Daftarkan kasir baru, kelola akun Owner, perpanjang masa aktif langganan, dan edit data toko retail.
+            Daftarkan kasir baru, simpan draft akun, perpanjang masa aktif langganan, dan kelola akun Owner.
           </p>
         </div>
 

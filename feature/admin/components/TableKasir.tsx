@@ -15,10 +15,12 @@ import {
   CalendarClock,
   Edit,
   Eye,
+  FileText,
   Phone,
   PowerOff,
   Store,
   Trash2,
+  Zap,
 } from "lucide-react";
 import Link from "next/link";
 import { useState } from "react";
@@ -55,6 +57,17 @@ export function TableKasir({
   const [isDeleteOpen, setIsDeleteOpen] = useState(false);
 
   function getStatusBadge(kasir: IKasirUser) {
+    if (
+      kasir.contractStatus === "draft" ||
+      (!kasir.contractStart && !kasir.contractEnd)
+    ) {
+      return (
+        <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-semibold bg-amber-50 text-amber-800 border border-amber-300">
+          <FileText size={12} className="text-amber-600" />
+          Draft (Belum Aktif)
+        </span>
+      );
+    }
     if (kasir.contractStatus === "terminated" || !kasir.isActive) {
       return (
         <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-semibold bg-gray-100 text-gray-700 border border-gray-300">
@@ -126,159 +139,182 @@ export function TableKasir({
             )}
 
             {!isLoading &&
-              kasirList.map((kasir, idx) => (
-                <TableRow
-                  key={kasir.id}
-                  className="hover:bg-slate-50/80 transition-colors"
-                >
-                  <TableCell className="text-center font-medium text-gray-500">
-                    {idx + 1}
-                  </TableCell>
+              kasirList.map((kasir, idx) => {
+                const isDraft =
+                  kasir.contractStatus === "draft" ||
+                  (!kasir.contractStart && !kasir.contractEnd);
 
-                  <TableCell>
-                    <div className="flex flex-col">
-                      <span className="font-bold text-gray-900 text-sm flex items-center gap-1.5">
-                        <Store size={14} className="text-blue-600" />
-                        {kasir.storeName || kasir.name}
-                      </span>
-                      <span className="text-xs text-gray-500 font-mono pl-5">
-                        @{kasir.username} ({kasir.name})
-                      </span>
-                    </div>
-                  </TableCell>
+                return (
+                  <TableRow
+                    key={kasir.id}
+                    className="hover:bg-slate-50/80 transition-colors"
+                  >
+                    <TableCell className="text-center font-medium text-gray-500">
+                      {idx + 1}
+                    </TableCell>
 
-                  <TableCell>
-                    <div className="flex flex-col text-xs text-gray-600">
-                      {kasir.phone ? (
-                        <span className="inline-flex items-center gap-1 font-mono">
-                          <Phone size={12} className="text-gray-400" />
-                          {kasir.phone}
+                    <TableCell>
+                      <div className="flex flex-col">
+                        <span className="font-bold text-gray-900 text-sm flex items-center gap-1.5">
+                          <Store size={14} className="text-blue-600" />
+                          {kasir.storeName || kasir.name}
                         </span>
-                      ) : (
-                        <span className="text-gray-400">-</span>
-                      )}
-                      {kasir.email && (
-                        <span className="text-gray-400 text-[11px]">
-                          {kasir.email}
+                        <span className="text-xs text-gray-500 font-mono pl-5">
+                          @{kasir.username} ({kasir.name})
                         </span>
-                      )}
-                    </div>
-                  </TableCell>
+                      </div>
+                    </TableCell>
 
-                  <TableCell>
-                    <div className="flex flex-col text-xs text-gray-700">
-                      {kasir.contractEnd ? (
-                        <>
-                          <span>
-                            s/d{" "}
-                            <strong>
-                              {new Date(kasir.contractEnd).toLocaleDateString(
-                                "id-ID",
-                                {
-                                  day: "numeric",
-                                  month: "short",
-                                  year: "numeric",
-                                },
-                              )}
-                            </strong>
+                    <TableCell>
+                      <div className="flex flex-col text-xs text-gray-600">
+                        {kasir.phone ? (
+                          <span className="inline-flex items-center gap-1 font-mono">
+                            <Phone size={12} className="text-gray-400" />
+                            {kasir.phone}
                           </span>
-                        </>
-                      ) : (
-                        <span className="text-gray-400">Belum diatur</span>
-                      )}
-                    </div>
-                  </TableCell>
+                        ) : (
+                          <span className="text-gray-400">-</span>
+                        )}
+                        {kasir.email && (
+                          <span className="text-gray-400 text-[11px]">
+                            {kasir.email}
+                          </span>
+                        )}
+                      </div>
+                    </TableCell>
 
-                  <TableCell className="text-center">
-                    {getStatusBadge(kasir)}
-                  </TableCell>
+                    <TableCell>
+                      <div className="flex flex-col text-xs text-gray-700">
+                        {kasir.contractEnd ? (
+                          <>
+                            <span>
+                              s/d{" "}
+                              <strong>
+                                {new Date(kasir.contractEnd).toLocaleDateString(
+                                  "id-ID",
+                                  {
+                                    day: "numeric",
+                                    month: "short",
+                                    year: "numeric",
+                                  },
+                                )}
+                              </strong>
+                            </span>
+                          </>
+                        ) : (
+                          <span className="text-amber-600 font-semibold">
+                            Draft (Belum diaktifkan)
+                          </span>
+                        )}
+                      </div>
+                    </TableCell>
 
-                  <TableCell className="text-center">
-                    <div className="inline-flex gap-1.5 text-[11px] font-medium text-gray-600">
-                      <span className="px-1.5 py-0.5 bg-slate-100 rounded">
-                        {kasir._count?.products || 0} Produk
-                      </span>
-                      <span className="px-1.5 py-0.5 bg-slate-100 rounded">
-                        {kasir._count?.transactions || 0} Trx
-                      </span>
-                    </div>
-                  </TableCell>
+                    <TableCell className="text-center">
+                      {getStatusBadge(kasir)}
+                    </TableCell>
 
-                  <TableCell className="text-right pr-6">
-                    <div className="flex justify-end gap-1.5 items-center">
-                      {/* Tombol Perpanjang */}
-                      <Button
-                        size="sm"
-                        onClick={() => {
-                          setSelectedForExtend(kasir);
-                          setIsExtendOpen(true);
-                        }}
-                        className="h-8 px-2.5 bg-blue-600 hover:bg-blue-500 text-white font-semibold text-xs flex items-center gap-1"
-                        title="Perpanjang Masa Aktif Kontrak"
-                      >
-                        <CalendarClock size={13} />
-                        <span>Perpanjang</span>
-                      </Button>
+                    <TableCell className="text-center">
+                      <div className="inline-flex gap-1.5 text-[11px] font-medium text-gray-600">
+                        <span className="px-1.5 py-0.5 bg-slate-100 rounded">
+                          {kasir._count?.products || 0} Produk
+                        </span>
+                        <span className="px-1.5 py-0.5 bg-slate-100 rounded">
+                          {kasir._count?.transactions || 0} Trx
+                        </span>
+                      </div>
+                    </TableCell>
 
-                      {/* Tombol Putus Kontrak */}
-                      {kasir.isActive && (
+                    <TableCell className="text-right pr-6">
+                      <div className="flex justify-end gap-1.5 items-center">
+                        {/* Tombol Aktifkan (Khusus Draft) atau Perpanjang */}
+                        {isDraft ? (
+                          <Button
+                            size="sm"
+                            onClick={() => {
+                              setSelectedForExtend(kasir);
+                              setIsExtendOpen(true);
+                            }}
+                            className="h-8 px-2.5 bg-green-600 hover:bg-green-500 text-white font-semibold text-xs flex items-center gap-1"
+                            title="Aktifkan Kontrak Kasir"
+                          >
+                            <Zap size={13} />
+                            <span>Aktifkan</span>
+                          </Button>
+                        ) : (
+                          <Button
+                            size="sm"
+                            onClick={() => {
+                              setSelectedForExtend(kasir);
+                              setIsExtendOpen(true);
+                            }}
+                            className="h-8 px-2.5 bg-blue-600 hover:bg-blue-500 text-white font-semibold text-xs flex items-center gap-1"
+                            title="Perpanjang Masa Aktif Kontrak"
+                          >
+                            <CalendarClock size={13} />
+                            <span>Perpanjang</span>
+                          </Button>
+                        )}
+
+                        {/* Tombol Putus Kontrak (jika aktif) */}
+                        {kasir.isActive && !isDraft && (
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            onClick={() => {
+                              setSelectedForTerminate(kasir);
+                              setIsTerminateOpen(true);
+                            }}
+                            className="h-8 px-2 text-red-600 hover:bg-red-50 border-red-200"
+                            title="Putus Kontrak"
+                          >
+                            <PowerOff size={13} />
+                          </Button>
+                        )}
+
+                        {/* Tombol Edit Profil Kasir */}
                         <Button
                           size="sm"
                           variant="outline"
                           onClick={() => {
-                            setSelectedForTerminate(kasir);
-                            setIsTerminateOpen(true);
+                            setSelectedForEdit(kasir);
+                            setIsEditOpen(true);
                           }}
-                          className="h-8 px-2 text-red-600 hover:bg-red-50 border-red-200"
-                          title="Putus Kontrak"
+                          className="h-8 px-2 text-amber-600 hover:bg-amber-50 border-amber-300"
+                          title="Edit Data Toko & Kasir"
                         >
-                          <PowerOff size={13} />
+                          <Edit size={13} />
                         </Button>
-                      )}
 
-                      {/* Tombol Edit Profil Kasir */}
-                      <Button
-                        size="sm"
-                        variant="outline"
-                        onClick={() => {
-                          setSelectedForEdit(kasir);
-                          setIsEditOpen(true);
-                        }}
-                        className="h-8 px-2 text-amber-600 hover:bg-amber-50 border-amber-300"
-                        title="Edit Data Toko & Kasir"
-                      >
-                        <Edit size={13} />
-                      </Button>
-
-                      {/* Tombol Hapus Kasir */}
-                      <Button
-                        size="sm"
-                        variant="outline"
-                        onClick={() => {
-                          setSelectedForDelete(kasir);
-                          setIsDeleteOpen(true);
-                        }}
-                        className="h-8 px-2 text-red-600 hover:bg-red-50 border-red-200"
-                        title="Hapus Akun Kasir"
-                      >
-                        <Trash2 size={13} />
-                      </Button>
-
-                      {/* Tombol Pantau Toko */}
-                      <Link href={`/admin/kasir/${kasir.id}`}>
+                        {/* Tombol Hapus Kasir */}
                         <Button
                           size="sm"
                           variant="outline"
-                          className="h-8 px-2 text-gray-700 hover:bg-slate-100 border-slate-300"
-                          title="Pantau Produk & Transaksi Kasir Ini"
+                          onClick={() => {
+                            setSelectedForDelete(kasir);
+                            setIsDeleteOpen(true);
+                          }}
+                          className="h-8 px-2 text-red-600 hover:bg-red-50 border-red-200"
+                          title="Hapus Akun Kasir"
                         >
-                          <Eye size={13} />
+                          <Trash2 size={13} />
                         </Button>
-                      </Link>
-                    </div>
-                  </TableCell>
-                </TableRow>
-              ))}
+
+                        {/* Tombol Pantau Toko */}
+                        <Link href={`/admin/kasir/${kasir.id}`}>
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            className="h-8 px-2 text-gray-700 hover:bg-slate-100 border-slate-300"
+                            title="Pantau Produk & Transaksi Kasir Ini"
+                          >
+                            <Eye size={13} />
+                          </Button>
+                        </Link>
+                      </div>
+                    </TableCell>
+                  </TableRow>
+                );
+              })}
           </TableBody>
         </Table>
       </div>
