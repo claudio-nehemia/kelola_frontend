@@ -4,6 +4,7 @@ import {
   IResGetContracts,
   IResGetKasirList,
   IResGetMonitoring,
+  IResGetOwners,
   IResGetPricing,
   IResGetStats,
 } from "../models/adminModel";
@@ -73,6 +74,34 @@ export const adminService = {
     return response;
   },
 
+  updateKasir: async ({
+    id,
+    data,
+  }: {
+    id: string;
+    data: {
+      name?: string;
+      storeName?: string;
+      email?: string;
+      phone?: string;
+      password?: string;
+      isActive?: boolean;
+    };
+  }) => {
+    const response = await apiClient.put(
+      API_ENDPOINTS.ADMIN.UPDATE_KASIR(id),
+      data,
+    );
+    return response;
+  },
+
+  deleteKasir: async (id: string) => {
+    const response = await apiClient.delete(
+      API_ENDPOINTS.ADMIN.DELETE_KASIR(id),
+    );
+    return response;
+  },
+
   extendContract: async ({
     userId,
     durationMonths,
@@ -130,6 +159,60 @@ export const adminService = {
   getKasirMonitoring: async (kasirId: string) => {
     const response = await apiClient.get<IResGetMonitoring>(
       API_ENDPOINTS.ADMIN.MONITOR_KASIR(kasirId),
+    );
+    return response;
+  },
+
+  // ==================== OWNER SERVICES ====================
+  getAllOwners: async (search?: string) => {
+    const response = await apiClient.get<IResGetOwners>(
+      API_ENDPOINTS.ADMIN.OWNERS_LIST,
+      {
+        params: {
+          search: search && search.trim() !== "" ? search : undefined,
+        },
+      },
+    );
+    return response;
+  },
+
+  createOwner: async (data: {
+    name: string;
+    username: string;
+    password: string;
+    email?: string;
+    phone?: string;
+  }) => {
+    const response = await apiClient.post(
+      API_ENDPOINTS.ADMIN.CREATE_OWNER,
+      data,
+    );
+    return response;
+  },
+
+  updateOwner: async ({
+    id,
+    data,
+  }: {
+    id: string;
+    data: {
+      name?: string;
+      email?: string;
+      phone?: string;
+      password?: string;
+      isActive?: boolean;
+    };
+  }) => {
+    const response = await apiClient.put(
+      API_ENDPOINTS.ADMIN.UPDATE_OWNER(id),
+      data,
+    );
+    return response;
+  },
+
+  deleteOwner: async (id: string) => {
+    const response = await apiClient.delete(
+      API_ENDPOINTS.ADMIN.DELETE_OWNER(id),
     );
     return response;
   },

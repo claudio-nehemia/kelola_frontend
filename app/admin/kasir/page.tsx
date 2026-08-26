@@ -4,6 +4,7 @@ import { Input } from "@/components/ui/input";
 import { useDebounce } from "@/feature/_global/utils/useDebounce";
 import { useGetAllKasir } from "@/feature/admin/action/useGetAllKasir";
 import { DialogCreateKasir } from "@/feature/admin/components/DialogCreateKasir";
+import { DialogManageOwner } from "@/feature/admin/components/DialogManageOwner";
 import { TableKasir } from "@/feature/admin/components/TableKasir";
 import { Search } from "lucide-react";
 import { useSearchParams } from "next/navigation";
@@ -40,17 +41,22 @@ function KasirManagementContent() {
 
   return (
     <div className="space-y-6 w-full">
-      {/* Top Header */}
+      {/* Top Header & Actions */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
           <h1 className="text-2xl sm:text-3xl font-bold text-[#041336]">
             Manajemen Toko & Admin Kasir
           </h1>
           <p className="text-xs sm:text-sm text-gray-500 mt-0.5">
-            Daftarkan kasir baru, perpanjang masa aktif langganan, dan putus kontrak toko retail.
+            Daftarkan kasir baru, kelola akun Owner, perpanjang masa aktif langganan, dan edit data toko retail.
           </p>
         </div>
-        <DialogCreateKasir />
+
+        {/* Buttons: Atur Owner & Daftarkan Kasir Baru */}
+        <div className="flex items-center gap-2.5 flex-wrap">
+          <DialogManageOwner />
+          <DialogCreateKasir />
+        </div>
       </div>
 
       {/* Search & Filter Tab */}
@@ -85,7 +91,7 @@ function KasirManagementContent() {
         </div>
       </div>
 
-      {/* Table */}
+      {/* Table with Edit, Delete, Extend, Terminate, and Monitor */}
       <TableKasir kasirList={kasirList} isLoading={isLoading} />
     </div>
   );

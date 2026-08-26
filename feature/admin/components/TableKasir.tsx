@@ -13,16 +13,20 @@ import {
   AlertTriangle,
   CalendarCheck2,
   CalendarClock,
+  Edit,
   Eye,
   Phone,
   PowerOff,
   Store,
+  Trash2,
 } from "lucide-react";
 import Link from "next/link";
 import { useState } from "react";
 import { IKasirUser } from "../models/adminModel";
 import { DialogExtendContract } from "./DialogExtendContract";
 import { DialogTerminateContract } from "./DialogTerminateContract";
+import { DialogEditKasir } from "./DialogEditKasir";
+import { DialogDeleteKasir } from "./DialogDeleteKasir";
 
 export function TableKasir({
   kasirList,
@@ -39,6 +43,16 @@ export function TableKasir({
   const [selectedForTerminate, setSelectedForTerminate] =
     useState<IKasirUser | null>(null);
   const [isTerminateOpen, setIsTerminateOpen] = useState(false);
+
+  const [selectedForEdit, setSelectedForEdit] = useState<IKasirUser | null>(
+    null,
+  );
+  const [isEditOpen, setIsEditOpen] = useState(false);
+
+  const [selectedForDelete, setSelectedForDelete] = useState<IKasirUser | null>(
+    null,
+  );
+  const [isDeleteOpen, setIsDeleteOpen] = useState(false);
 
   function getStatusBadge(kasir: IKasirUser) {
     if (kasir.contractStatus === "terminated" || !kasir.isActive) {
@@ -85,7 +99,7 @@ export function TableKasir({
               <TableHead>Masa Aktif Kontrak</TableHead>
               <TableHead className="text-center">Status Masa Aktif</TableHead>
               <TableHead className="text-center">Data Toko</TableHead>
-              <TableHead className="text-right pr-6">Aksi Kontrak</TableHead>
+              <TableHead className="text-right pr-6">Aksi & Kontrak</TableHead>
             </TableRow>
           </TableHeader>
 
@@ -192,19 +206,21 @@ export function TableKasir({
 
                   <TableCell className="text-right pr-6">
                     <div className="flex justify-end gap-1.5 items-center">
+                      {/* Tombol Perpanjang */}
                       <Button
                         size="sm"
                         onClick={() => {
                           setSelectedForExtend(kasir);
                           setIsExtendOpen(true);
                         }}
-                        className="h-8 px-3 bg-blue-600 hover:bg-blue-500 text-white font-semibold text-xs flex items-center gap-1"
+                        className="h-8 px-2.5 bg-blue-600 hover:bg-blue-500 text-white font-semibold text-xs flex items-center gap-1"
                         title="Perpanjang Masa Aktif Kontrak"
                       >
-                        <CalendarClock size={14} />
+                        <CalendarClock size={13} />
                         <span>Perpanjang</span>
                       </Button>
 
+                      {/* Tombol Putus Kontrak */}
                       {kasir.isActive && (
                         <Button
                           size="sm"
@@ -216,18 +232,47 @@ export function TableKasir({
                           className="h-8 px-2 text-red-600 hover:bg-red-50 border-red-200"
                           title="Putus Kontrak"
                         >
-                          <PowerOff size={14} />
+                          <PowerOff size={13} />
                         </Button>
                       )}
 
+                      {/* Tombol Edit Profil Kasir */}
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={() => {
+                          setSelectedForEdit(kasir);
+                          setIsEditOpen(true);
+                        }}
+                        className="h-8 px-2 text-amber-600 hover:bg-amber-50 border-amber-300"
+                        title="Edit Data Toko & Kasir"
+                      >
+                        <Edit size={13} />
+                      </Button>
+
+                      {/* Tombol Hapus Kasir */}
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={() => {
+                          setSelectedForDelete(kasir);
+                          setIsDeleteOpen(true);
+                        }}
+                        className="h-8 px-2 text-red-600 hover:bg-red-50 border-red-200"
+                        title="Hapus Akun Kasir"
+                      >
+                        <Trash2 size={13} />
+                      </Button>
+
+                      {/* Tombol Pantau Toko */}
                       <Link href={`/admin/kasir/${kasir.id}`}>
                         <Button
                           size="sm"
                           variant="outline"
-                          className="h-8 px-2.5 text-gray-700 hover:bg-slate-100 border-slate-300"
+                          className="h-8 px-2 text-gray-700 hover:bg-slate-100 border-slate-300"
                           title="Pantau Produk & Transaksi Kasir Ini"
                         >
-                          <Eye size={14} />
+                          <Eye size={13} />
                         </Button>
                       </Link>
                     </div>
@@ -251,6 +296,22 @@ export function TableKasir({
           kasir={selectedForTerminate}
           isOpen={isTerminateOpen}
           setIsOpen={setIsTerminateOpen}
+        />
+      )}
+
+      {selectedForEdit && (
+        <DialogEditKasir
+          kasir={selectedForEdit}
+          isOpen={isEditOpen}
+          setIsOpen={setIsEditOpen}
+        />
+      )}
+
+      {selectedForDelete && (
+        <DialogDeleteKasir
+          kasir={selectedForDelete}
+          isOpen={isDeleteOpen}
+          setIsOpen={setIsDeleteOpen}
         />
       )}
     </>

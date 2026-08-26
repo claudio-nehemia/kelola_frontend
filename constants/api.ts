@@ -13,9 +13,16 @@ export const API_ENDPOINTS = {
     CONTRACTS: "/api/admin/contracts",
     KASIR_LIST: "/api/admin/kasir",
     CREATE_KASIR: "/api/admin/kasir",
+    UPDATE_KASIR: (id: string) => `/api/admin/kasir/${id}`,
+    DELETE_KASIR: (id: string) => `/api/admin/kasir/${id}`,
     EXTEND_KASIR: (id: string) => `/api/admin/kasir/${id}/extend`,
     TERMINATE_KASIR: (id: string) => `/api/admin/kasir/${id}/terminate`,
     MONITOR_KASIR: (id: string) => `/api/admin/kasir/${id}/monitor`,
+    // Owner endpoints
+    OWNERS_LIST: "/api/admin/owners",
+    CREATE_OWNER: "/api/admin/owners",
+    UPDATE_OWNER: (id: string) => `/api/admin/owners/${id}`,
+    DELETE_OWNER: (id: string) => `/api/admin/owners/${id}`,
   },
   USERS: {
     GET_ALL: "/api/users",

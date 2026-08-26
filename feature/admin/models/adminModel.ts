@@ -21,6 +21,17 @@ export interface IKasirUser {
   };
 }
 
+export interface IOwnerUser {
+  id: string;
+  username: string;
+  name: string;
+  email: string | null;
+  phone: string | null;
+  role: string;
+  isActive: boolean;
+  createdAt: string;
+}
+
 export interface IContractHistoryItem {
   id: string;
   userId: string;
@@ -83,6 +94,10 @@ export interface IKasirMonitoring {
 
 export interface IResGetKasirList extends GlobalResponse {
   data: IKasirUser[];
+}
+
+export interface IResGetOwners extends GlobalResponse {
+  data: IOwnerUser[];
 }
 
 export interface IResGetContracts extends GlobalResponse {
