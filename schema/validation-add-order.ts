@@ -1,30 +1,24 @@
+import { Control } from "react-hook-form";
 import z from "zod";
 
 export const AddOrderSchema = z.object({
-  namaCustomer: z.string(),
-  nameCustomer: z.string(),
-  paymentMethod: z.string(),
-  listItemProduct: z.array(
-    z.object({
-      productId: z.string(),
-      name: z.string().optional(),
-      price: z.number().optional(),
-      quantity: z.number(),
-    }),
-  ),
+  namaCustomer: z
+    .string()
+    .min(1, "Nama pelanggan wajib diisi!")
+    .max(100, "Nama pelanggan tidak boleh lebih dari 100 karakter"),
   productSells: z
     .array(
       z.object({
-        productId: z.string(),
-        quantity: z.number(),
+        productId: z.string().min(1, "ID produk wajib diisi!"),
+        quantity: z.number().min(1, "Kuantitas wajib diisi!"),
       }),
     )
-    .optional(),
-  inputPayment: z.number(),
+    .min(1, "List item produk wajib diisi!"),
+  inputPayment: z.number().min(1, "Jumlah pembayaran wajib diisi!"),
 });
 
 export type validationAddOrder = z.infer<typeof AddOrderSchema>;
 
 export interface controlAddOrder {
-  control: any;
+  control: Control<validationAddOrder>;
 }

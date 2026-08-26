@@ -2,7 +2,6 @@ import { useMutation } from "@tanstack/react-query";
 import { authService } from "../service/authService";
 import { useAuthStore } from "@/state/authStore";
 import { useRouter } from "next/navigation";
-import { User } from "../models/authModel";
 
 export function useActionLogin() {
   const setAuth = useAuthStore((state) => state.setAuth);
@@ -13,15 +12,16 @@ export function useActionLogin() {
       const response = await authService.login(data.username, data.password);
       return response.data.data;
     },
-    onSuccess: (data: any) => {
-      const user: User = data?.user || {
-        id: data?.id,
-        username: data?.username,
-        name: data?.name,
-        email: data?.email,
-        userType: data?.userType,
-      };
-      setAuth(user);
+    onSuccess: (data) => {
+      if (data) {
+        setAuth({
+          id: (data as any).id || "user_id",
+          username: data.username,
+          name: data.name || data.username,
+          email: data.email || `${data.username}@kelola.local`,
+          userType: data.userType || "OWNER",
+        });
+      }
       router.push("/dashboard");
     },
   });

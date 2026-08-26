@@ -22,12 +22,11 @@ export function DashboardLayout({ children }: { children: ReactNode }) {
     useState(false);
 
   const { mutate: actionLogout } = useActionLogout();
-
   return (
     <>
-      <div className="flex flex-col w-full min-h-screen overflow-x-hidden bg-gray-50/30">
+      <div className="flex flex-col w-full min-h-screen">
         <div className="flex flex-col w-full bg-[#041336]">
-          <div className="flex h-16 items-center justify-between px-6 max-w-7xl mx-auto w-full">
+          <div className="flex h-15 items-center justify-around">
             <Link href="/dashboard">
               <Image
                 src="/logoputihkelolatoko.png"
@@ -42,7 +41,7 @@ export function DashboardLayout({ children }: { children: ReactNode }) {
               <DropdownMenuTrigger render={<Button variant="outline" />}>
                 <TextAlignJustify />
               </DropdownMenuTrigger>
-              <DropdownMenuContent align="end" className="w-48">
+              <DropdownMenuContent>
                 <DropdownMenuGroup>
                   <DropdownMenuLabel>Pengaturan</DropdownMenuLabel>
                   <DropdownMenuItem
@@ -52,7 +51,7 @@ export function DashboardLayout({ children }: { children: ReactNode }) {
                     Ubah Password
                   </DropdownMenuItem>
                   <DropdownMenuItem
-                    className="bg-red-500 hover:bg-red-600 font-bold text-white cursor-pointer focus:bg-red-600 focus:text-white"
+                    className="bg-red-500 font-bold text-white cursor-pointer"
                     onClick={() => actionLogout()}
                   >
                     Log Out
@@ -62,7 +61,7 @@ export function DashboardLayout({ children }: { children: ReactNode }) {
             </DropdownMenu>
           </div>
         </div>
-        <div className="flex-1 p-4 md:p-8 max-w-7xl mx-auto w-full">{children}</div>
+        <div className="flex-1 p-6 md:p-10 md:px-17">{children}</div>
         <Footer />
       </div>
 

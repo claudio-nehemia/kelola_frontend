@@ -22,11 +22,12 @@ const AddCategorySchema = z.object({
 export function AddCategory({ className }: { className?: string }) {
   const [isOpen, setIsOpen] = useState(false);
   const [categoryName, setCategoryName] = useState("");
+
   const [errors, setErrors] = useState<{
     categoryName?: string;
   }>({});
 
-  const { mutate: actionAddCategory, isPending } = useActionCategoryProduct();
+  const { mutate: actionAddCategory } = useActionCategoryProduct();
   const queryClient = useQueryClient();
 
   function handleSubmit() {
@@ -42,35 +43,28 @@ export function AddCategory({ className }: { className?: string }) {
       return;
     }
 
-    setErrors({});
-    actionAddCategory(
-      { name: result.data.name },
-      {
-        onSuccess: () => {
-          queryClient.invalidateQueries({ queryKey: ["getCategoryProduct"] });
-          queryClient.invalidateQueries({ queryKey: ["categories"] });
-          toast.success("Kategori berhasil ditambahkan!");
-          setCategoryName("");
-          setIsOpen(false);
+    if (result.success) {
+      setErrors({});
+      actionAddCategory(
+        { name: result.data.name },
+        {
+          onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: ["getCategoryProduct"] });
+            toast.success("Kategori berhasil ditambahkan");
+            setCategoryName("");
+            setIsOpen(false);
+          },
+          onError: () => {
+            toast.error("Kategori gagal ditambahkan / sudah tersedia");
+          },
         },
-        onError: (err: any) => {
-          const msg =
-            err?.response?.data?.message ||
-            "Kategori gagal ditambahkan / sudah tersedia";
-          setErrors({ categoryName: msg });
-          toast.error(msg);
-        },
-      },
-    );
+      );
+    }
   }
 
   return (
     <Dialog open={isOpen} onOpenChange={setIsOpen}>
-      <DialogTrigger
-        render={
-          <Button className={`px-7 py-5 ${className || ""}`} />
-        }
-      >
+      <DialogTrigger render={<Button className={`px-7 py-5 ${className || ""}`} />}>
         <BadgePlus />
         <p>Tambah Kategori</p>
       </DialogTrigger>
@@ -87,15 +81,11 @@ export function AddCategory({ className }: { className?: string }) {
           className="mt-4"
         />
         {errors.categoryName && (
-          <p className="text-red-500 text-sm mt-1">{errors.categoryName}</p>
+          <p className="text-red-500 ml-1 text-sm">{errors.categoryName}</p>
         )}
 
-        <Button
-          className="bg-primary mt-4"
-          onClick={handleSubmit}
-          disabled={isPending}
-        >
-          {isPending ? "Menyimpan..." : "Simpan"}
+        <Button className="bg-primary mt-4" onClick={handleSubmit}>
+          Simpan
         </Button>
       </DialogContent>
     </Dialog>

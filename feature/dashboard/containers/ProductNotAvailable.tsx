@@ -8,34 +8,34 @@ import { Card } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
 
 export function ProductNotAvailable() {
-  const { data: productsNotAvailable = [], isLoading } =
+  const { data: productsNotAvailable, isLoading } =
     useGet10ProductsNotAvailable();
 
   return (
-    <div className="space-y-3 mt-8">
+    <div className="space-y-2 mt-10">
       <div className="flex items-center gap-2">
-        <h1 className="flex bg-[#041336] w-fit text-white px-4 py-1 rounded-sm font-bold text-sm md:text-base">
+        <h1 className="flex bg-[#041336] w-fit text-white px-4 rounded-sm font-bold">
           Produk Tidak Tersedia
         </h1>
 
         <Link href="/manage-product?status=tidak_tersedia">
-          <div className="flex text-blue-500 items-center hover:underline cursor-pointer">
+          <div className="flex text-blue-500 items-center">
             <NotebookTabs size={16} />
-            <p className="ml-1 text-sm font-medium">Lihat Detail</p>
+            <p>Lihat Detail</p>
           </div>
         </Link>
       </div>
 
-      {productsNotAvailable.length === 0 && !isLoading && (
-        <div className="border rounded-md flex flex-col justify-center items-center py-6 bg-white">
-          <p className="text-muted-foreground text-center">
+      {productsNotAvailable?.length === 0 && !isLoading && (
+        <div className="border w-fit rounded-md flex flex-col justify-center items-center py-1.5">
+          <p className="text-muted-foreground text-center px-6 py-8">
             Semua produk memiliki stok tersedia.
           </p>
         </div>
       )}
 
       <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 xl:grid-cols-5 gap-4">
-        {productsNotAvailable.map((product: any) => (
+        {productsNotAvailable?.map((product) => (
           <CardProduct
             key={product.id}
             productId={product.id}
@@ -52,9 +52,7 @@ export function ProductNotAvailable() {
             {Array.from({ length: 5 }).map((_, index) => (
               <Card
                 key={index}
-                className={cn(
-                  "w-full h-52 animate-pulse bg-muted-foreground/20",
-                )}
+                className={cn("w-full h-52 animate-pulse bg-muted-foreground/20")}
               />
             ))}
           </>

@@ -80,13 +80,13 @@ export function DetailTransactionContainer() {
     },
   ];
 
-  const [selectedCategory, setSelectedCategory] = useState("All");
+  const [selectedCategory, setSelectedCategory] = useState("all");
   return (
     <div className="flex flex-col items-center w-full gap-4">
-      <div className="flex justify-between w-325 items-center">
+      <div className="flex flex-col md:flex-row justify-between w-full max-w-7xl items-center gap-4">
         <h1 className="text-3xl font-bold">Detail Transaksi</h1>
 
-        <div className="flex gap-2.5 items-center">
+        <div className="flex flex-wrap gap-2.5 items-center">
           <OptionCategory
             value={selectedCategory}
             setValue={setSelectedCategory}

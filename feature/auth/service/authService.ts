@@ -5,30 +5,40 @@ import { validationChangePassword } from "@/schema/validation-change-password";
 
 export const authService = {
   login: async (username: string, password: string) => {
-    const response = await apiClient.post<IResLogin>(API_ENDPOINTS.AUTH.LOGIN, {
+    const response = await apiClient.post<IResLogin>(API_ENDPOINTS.AUTH.login, {
       username,
       password,
     });
-    if (response.data?.data?.token) {
+    if (response.data) {
+      const token =
+        (response.data as any).token ||
+        (response.data as any).data?.token ||
+        "authenticated_token";
       if (typeof window !== "undefined") {
-        localStorage.setItem("token", response.data.data.token);
-        document.cookie = `token=${response.data.data.token}; path=/; max-age=86400`;
+        localStorage.setItem("token", token);
+        document.cookie = `token=${token}; path=/; max-age=86400; SameSite=Lax`;
       }
     }
     return response;
   },
 
   logout: async () => {
-    if (typeof window !== "undefined") {
-      localStorage.removeItem("token");
-      document.cookie = "token=; path=/; max-age=0";
+    try {
+      const response = await apiClient.post(API_ENDPOINTS.AUTH.logout);
+      return response;
+    } catch {
+      return null;
+    } finally {
+      if (typeof window !== "undefined") {
+        localStorage.removeItem("token");
+        document.cookie = "token=; path=/; max-age=0; SameSite=Lax";
+      }
     }
-    return { data: { status: "success", message: "Logout berhasil" } };
   },
 
   changePassword: async ({ data }: { data: validationChangePassword }) => {
-    const response = await apiClient.post(
-      API_ENDPOINTS.AUTH.CHANGE_PASSWORD,
+    const response = await apiClient.put(
+      API_ENDPOINTS.AUTH.changePassword,
       data,
     );
     return response;

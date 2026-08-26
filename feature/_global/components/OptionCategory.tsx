@@ -1,5 +1,3 @@
-"use client";
-
 import {
   Select,
   SelectContent,
@@ -14,19 +12,17 @@ export function OptionCategory({
   setValue,
   namingText,
   className,
-  includeAll = true,
 }: {
   value: string;
   setValue: (value: string) => void;
-  namingText?: string;
+  namingText: string;
   className?: string;
-  includeAll?: boolean;
 }) {
-  const { data: options = [] } = useGetCategoryProduct();
+  const { data: options } = useGetCategoryProduct();
 
-  const selectCategory = includeAll
-    ? [{ id: "all", name: "Semua Kategori" }, ...(options || [])]
-    : options || [];
+  const defaultOption = { id: "all", name: "Semua Kategori" };
+
+  const selectCategory = [defaultOption, ...(options || [])];
 
   function handleChange(newValue: string | null) {
     if (newValue !== null) {
@@ -34,24 +30,20 @@ export function OptionCategory({
     }
   }
 
-  const selectedItem = selectCategory.find((val) => val.id === value);
-
   return (
-    <div className={`relative ${className || ""}`}>
-      {namingText && (
-        <p className="absolute -top-1.25 px-2 left-2 bg-white font-bold text-xs z-10">
-          {namingText}
-        </p>
-      )}
+    <div className={`relative`}>
+      <p className="absolute -top-1.25 px-2 left-2 bg-white font-bold text-xs">
+        {namingText}
+      </p>
 
       <Select value={value} onValueChange={handleChange}>
         <SelectTrigger className={`py-5 ${className || ""}`}>
           <SelectValue placeholder="Pilih Kategori">
-            {selectedItem?.name || "Pilih Kategori"}
+            {selectCategory.find((val) => val.id === value)?.name}
           </SelectValue>
         </SelectTrigger>
 
-        <SelectContent className="p-1.5 z-50">
+        <SelectContent className="p-1.5">
           {selectCategory.map((opt) => (
             <SelectItem key={opt.id} value={opt.id}>
               {opt.name}

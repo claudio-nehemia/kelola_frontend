@@ -54,7 +54,7 @@ export default function OverviewTransaction() {
   ];
 
   return (
-    <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 w-full items-start">
+    <div className="flex flex-col lg:flex-row gap-6 w-full">
       <ChartLineLinear />
       <HighlightTableDataTransaction dataTransaction={invoices} />
     </div>

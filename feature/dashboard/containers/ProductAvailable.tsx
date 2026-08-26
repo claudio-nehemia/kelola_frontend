@@ -10,42 +10,39 @@ import { AddProduct } from "../components/content-action-product/AddProduct";
 import { Button } from "@/components/ui/button";
 
 export function ProductAvailable() {
-  const { data: productsAvailable = [], isLoading } =
-    useGet10ProductsAvailable();
+  const { data: productsAvailable, isLoading } = useGet10ProductsAvailable();
 
   return (
-    <div className="space-y-3 mt-8">
+    <div className="space-y-2 mt-10">
       <div className="flex items-center gap-2">
-        <h1 className="flex bg-[#041336] w-fit text-white px-4 py-1 rounded-sm font-bold text-sm md:text-base">
+        <h1 className="flex bg-[#041336] w-fit text-white px-4 rounded-sm font-bold">
           Produk Tersedia
         </h1>
         <Link href="/manage-product?status=tersedia">
-          <div className="flex text-blue-500 items-center hover:underline cursor-pointer">
+          <div className="flex text-blue-500 items-center">
             <NotebookTabs size={16} />
-            <p className="ml-1 text-sm font-medium">Lihat Detail</p>
+            <p>Lihat Detail</p>
           </div>
         </Link>
       </div>
 
-      {productsAvailable.length === 0 && !isLoading && (
-        <div className="border-2 rounded-md flex flex-col justify-center items-center py-6 px-4 bg-white">
-          <p className="text-muted-foreground text-center mb-3">
-            Tidak ada produk tersedia. Silahkan tambah produk.
+      {productsAvailable?.length === 0 && !isLoading && (
+        <div className="border-4 w-fit rounded-md flex flex-col justify-center items-center py-2.5 px-3.5">
+          <p className="text-muted-foreground text-center px-6">
+            Tidak ada produk tersedia. <br /> Tambah atau Kelola Produk.
           </p>
-          <div className="flex gap-2">
-            <AddProduct mode="add" className="text-sm" />
-            <Link href="/manage-product">
-              <Button className="px-5 py-5 bg-amber-300 hover:bg-amber-200 text-black font-bold text-sm">
-                <PackageSearch className="w-4 h-4 mr-1" />
-                Kelola Produk
-              </Button>
-            </Link>
-          </div>
+          <AddProduct mode="add" className="mt-1.5 w-65 text-md" />
+          <Link href="/manage-product">
+            <Button className="px-7 py-5 w-65 bg-amber-300 hover:bg-amber-200 hover:cursor-pointer text-black font-bold text-md">
+              <PackageSearch />
+              <p>Kelola Produk</p>
+            </Button>
+          </Link>
         </div>
       )}
 
       <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 xl:grid-cols-5 gap-4">
-        {productsAvailable.map((product: any) => (
+        {productsAvailable?.map((product) => (
           <CardProduct
             productId={product.id}
             key={product.id}
@@ -56,15 +53,12 @@ export function ProductAvailable() {
             category={product.category}
           />
         ))}
-
         {isLoading && (
           <>
             {Array.from({ length: 5 }).map((_, index) => (
               <Card
                 key={index}
-                className={cn(
-                  "w-full h-52 animate-pulse bg-muted-foreground/20",
-                )}
+                className={cn("w-full h-52 animate-pulse bg-muted-foreground/20")}
               />
             ))}
           </>

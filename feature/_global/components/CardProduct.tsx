@@ -8,7 +8,6 @@ import {
 } from "@/components/ui/dialog";
 import { AddProduct } from "@/feature/dashboard/components/content-action-product/AddProduct";
 import { formatRupiah } from "@/feature/dashboard/helpers/formatRupuah";
-import { ProductItem } from "@/hooks/useProducts";
 import Image from "next/image";
 import { useState } from "react";
 
@@ -19,7 +18,6 @@ export function CardProduct({
   cleanProfit,
   stock,
   category,
-  product,
 }: {
   productId?: string;
   productName: string;
@@ -27,38 +25,24 @@ export function CardProduct({
   cleanProfit: number;
   stock: number;
   category: string;
-  product?: ProductItem;
 }) {
   const [isOpen, setIsOpen] = useState(false);
-  const id = productId || product?.id || "";
-
   return (
     <>
       <Card
-        className="w-full hover:cursor-pointer hover:shadow-lg transition-all duration-300 overflow-hidden"
+        className="w-full hover:cursor-pointer hover:shadow-lg transition-all duration-300"
         onClick={() => setIsOpen(true)}
       >
-        <div className="w-full h-36 bg-gray-100 flex items-center justify-center overflow-hidden relative">
-          <Image
-            src="/placeholder.png"
-            alt={productName || "Product Image"}
-            width={200}
-            height={150}
-            className="object-cover"
-            unoptimized
-          />
-        </div>
-        <CardContent className="p-3">
-          <h3 className="font-bold text-base truncate">{productName}</h3>
-          <p className="text-sm font-semibold text-blue-600 mt-1">
-            {formatRupiah(priceSell)}
-          </p>
-          <div className="flex justify-between items-center text-xs text-gray-500 mt-2">
-            <span>Stok: {stock}</span>
-            <span className="bg-gray-100 px-2 py-0.5 rounded truncate max-w-[100px]">
-              {category}
-            </span>
-          </div>
+        <Image
+          src="/placeholder.png"
+          alt={productName || "Product Image"}
+          width={350}
+          height={200}
+          unoptimized
+        />
+        <CardContent>
+          <h3 className="font-bold line-clamp-1">{productName}</h3>
+          <p className="text-lg">{formatRupiah(priceSell)}</p>
         </CardContent>
       </Card>
 
@@ -66,7 +50,7 @@ export function CardProduct({
         <DialogContent className="gap-0.5">
           <DialogTitle className="font-bold">{productName}</DialogTitle>
           <DialogDescription className="text-sm text-muted-foreground">
-            Informasi Detail Produk
+            Informasi Produk
           </DialogDescription>
 
           <div className="mt-4 space-y-2 w-full">
@@ -85,24 +69,11 @@ export function CardProduct({
               <span className="font-bold">Kategori:</span> {category}
             </p>
 
-            <div className="flex justify-end pt-4">
+            <div className="flex justify-end">
               <AddProduct
                 mode="edit"
-                initialData={
-                  product || {
-                    id,
-                    name: productName,
-                    productName,
-                    sellPrice: priceSell,
-                    priceSell,
-                    costPrice: priceSell - cleanProfit,
-                    cleanProfit,
-                    stock,
-                    categoryId: category,
-                  }
-                }
                 editMode={{
-                  productId: id,
+                  productId,
                   data: {
                     name: productName,
                     priceSell,

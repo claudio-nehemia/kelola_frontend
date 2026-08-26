@@ -22,7 +22,7 @@ export const actionButtonClient = [
     nameButton: "Kelola Produk",
     component: (
       <Link href="/manage-product">
-        <Button className="px-7 py-5 bg-amber-300 hover:bg-amber-200 hover:cursor-pointer text-black font-bold whitespace-nowrap">
+        <Button className="px-10 py-5 bg-amber-300 hover:bg-amber-200 hover:cursor-pointer text-black font-bold">
           <PackageSearch />
           <p>Kelola Produk</p>
         </Button>

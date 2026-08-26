@@ -8,7 +8,7 @@ import { AxiosResponse } from "axios";
 
 const productService = {
   addCategoryProduct: async ({ name }: { name: string }) => {
-    const response = await apiClient.post(API_ENDPOINTS.CATEGORIES.CREATE, {
+    const response = await apiClient.post(API_ENDPOINTS.PRODUCT.addCategory, {
       name,
     });
     return response;
@@ -16,13 +16,15 @@ const productService = {
 
   getCategoryProduct: async () => {
     const response = await apiClient.get<IResGetCategory>(
-      API_ENDPOINTS.CATEGORIES.GET_ALL,
+      API_ENDPOINTS.PRODUCT.getCategory,
     );
     return response;
   },
 
   getAllProduct: async (search?: string): Promise<AxiosResponse<IResGet10Products>> => {
-    const response = await apiClient.get(API_ENDPOINTS.PRODUCTS.GET_ALL);
+    const response = await apiClient.get(API_ENDPOINTS.PRODUCT.allProduct, {
+      params: { search },
+    });
     if (response.data && Array.isArray(response.data.data)) {
       let filtered = response.data.data;
       if (search && search.trim() !== "") {
@@ -63,7 +65,9 @@ const productService = {
     status?: string;
     category?: string;
   }): Promise<AxiosResponse<IResGet10Products>> => {
-    const response = await apiClient.get(API_ENDPOINTS.PRODUCTS.GET_ALL);
+    const response = await apiClient.get(API_ENDPOINTS.PRODUCT.allProductStatus, {
+      params: { status, category },
+    });
     if (response.data && Array.isArray(response.data.data)) {
       let filtered = response.data.data;
       if (status === "tersedia") {
@@ -112,7 +116,7 @@ const productService = {
       categoryId: data.categoryId,
     };
     const response = await apiClient.post(
-      API_ENDPOINTS.PRODUCTS.CREATE,
+      API_ENDPOINTS.PRODUCT.addProduct,
       payload,
     );
     return response;
@@ -140,7 +144,7 @@ const productService = {
   },
 
   get10ProductsAvailable: async (): Promise<AxiosResponse<IResGet10Products>> => {
-    const response = await apiClient.get(API_ENDPOINTS.PRODUCTS.GET_ALL);
+    const response = await apiClient.get(API_ENDPOINTS.PRODUCT.get10ProductsAvailable);
     if (response.data && Array.isArray(response.data.data)) {
       const filtered = response.data.data
         .filter((p: any) => p.stock > 0)
@@ -170,7 +174,7 @@ const productService = {
   },
 
   get10ProductsNotAvailable: async (): Promise<AxiosResponse<IResGet10Products>> => {
-    const response = await apiClient.get(API_ENDPOINTS.PRODUCTS.GET_ALL);
+    const response = await apiClient.get(API_ENDPOINTS.PRODUCT.get10ProductsNotAvailable);
     if (response.data && Array.isArray(response.data.data)) {
       const filtered = response.data.data
         .filter((p: any) => p.stock <= 0)
@@ -200,17 +204,16 @@ const productService = {
   },
 
   addOrder: async ({ data }: { data: validationAddOrder }) => {
-    const customerName = data.namaCustomer || data.nameCustomer || "Umum";
-    const rawItems = data.listItemProduct || data.productSells || [];
+    const customerName = data.namaCustomer || "Umum";
+    const rawItems = data.productSells || [];
     const listItemProduct = rawItems.map((item: any) => ({
       productId: item.productId,
       quantity: Number(item.quantity) || 1,
-      price: item.price !== undefined ? Number(item.price) : undefined,
     }));
-    const response = await apiClient.post(API_ENDPOINTS.TRANSACTIONS.CREATE, {
+    const response = await apiClient.post(API_ENDPOINTS.ORDER.addOrder, {
       customerName,
       inputPayment: Number(data.inputPayment) || 0,
-      paymentMethod: data.paymentMethod || "Cash",
+      paymentMethod: "Cash",
       listItemProduct,
     });
     return response;

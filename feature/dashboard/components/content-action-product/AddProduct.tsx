@@ -21,19 +21,16 @@ import { InputText } from "@/feature/_global/components/InputText";
 import { OptionCategory } from "@/feature/_global/components/OptionCategory";
 import { InputNumber } from "@/feature/_global/components/InputNumber";
 import { useActionAddProduct } from "../../action/useActionAddProduct";
-import { useActionUpdateProduct } from "../../action/useActionUpdateProduct";
 import { toast } from "sonner";
 import { useQueryClient } from "@tanstack/react-query";
-import { ProductItem } from "@/hooks/useProducts";
+import { useActionUpdateProduct } from "../../action/useActionUpdateProduct";
 
 export function AddProduct({
   mode,
-  initialData,
   className,
   editMode,
 }: {
   mode: "add" | "edit";
-  initialData?: ProductItem;
   className?: string;
   editMode?: {
     productId: string;
@@ -41,156 +38,96 @@ export function AddProduct({
   };
 }) {
   const [isOpen, setIsOpen] = useState(false);
-  const [errorMessage, setErrorMessage] = useState("");
-
-  const productId = editMode?.productId || initialData?.id || "";
 
   const form = useForm<validationAddProduct>({
     resolver: zodResolver(AddProductSchema),
     defaultValues: {
-      name:
-        editMode?.data?.name ||
-        initialData?.name ||
-        initialData?.productName ||
-        "",
-      priceSell:
-        editMode?.data?.priceSell ||
-        initialData?.sellPrice ||
-        initialData?.priceSell ||
-        0,
-      profit:
-        editMode?.data?.profit ||
-        initialData?.cleanProfit ||
-        (initialData?.sellPrice && initialData?.costPrice
-          ? initialData.sellPrice - initialData.costPrice
-          : 0),
-      stock: editMode?.data?.stock || initialData?.stock || 0,
-      categoryId:
-        editMode?.data?.categoryId ||
-        initialData?.categoryId ||
-        initialData?.category?.id ||
-        "",
+      name: editMode?.data.name || "",
+      priceSell: editMode?.data.priceSell || 0,
+      profit: editMode?.data.profit || 0,
+      stock: editMode?.data.stock || 0,
+      categoryId: editMode?.data.categoryId || "",
     },
   });
 
-  const queryClient = useQueryClient();
-  const { mutate: actionAddProduct, isPending: isAdding } =
-    useActionAddProduct();
-  const { mutate: actionEditProduct, isPending: isEditing } =
-    useActionUpdateProduct({
-      productId,
-    });
-
-  const { control, handleSubmit, reset } = form;
-
   useEffect(() => {
     if (editMode?.data) {
-      reset(editMode.data);
-    } else if (initialData) {
-      reset({
-        name: initialData.name || initialData.productName || "",
-        priceSell: initialData.sellPrice || initialData.priceSell || 0,
-        profit:
-          initialData.cleanProfit ||
-          (initialData.sellPrice && initialData.costPrice
-            ? initialData.sellPrice - initialData.costPrice
-            : 0),
-        stock: initialData.stock || 0,
-        categoryId:
-          initialData.categoryId || initialData.category?.id || "",
+      form.reset({
+        name: editMode.data.name,
+        priceSell: editMode.data.priceSell,
+        profit: editMode.data.profit,
+        stock: editMode.data.stock,
+        categoryId: editMode.data.categoryId || "",
       });
     }
-  }, [initialData, editMode, reset]);
+  }, [editMode, form]);
 
-  const isPending = isAdding || isEditing;
+  const queryClient = useQueryClient();
+
+  const { mutate: actionAddProduct } = useActionAddProduct();
+  const { mutate: actionEditProduct } = useActionUpdateProduct({
+    productId: editMode?.productId || "",
+  });
+
+  const { control, handleSubmit } = form;
+
+  const actionForm = mode === "add" ? actionAddProduct : actionEditProduct;
 
   function onSubmit(values: validationAddProduct) {
-    setErrorMessage("");
-
-    if (mode === "add") {
-      actionAddProduct(values, {
-        onSuccess: () => {
-          queryClient.invalidateQueries({
-            queryKey: ["get10ProductsNotAvailable"],
-          });
-          queryClient.invalidateQueries({
-            queryKey: ["get10ProductsAvailable"],
-          });
-          queryClient.invalidateQueries({
-            queryKey: ["getAllProduct"],
-          });
-          queryClient.invalidateQueries({
-            queryKey: ["getAllProductAvailable"],
-          });
-          queryClient.invalidateQueries({
-            queryKey: ["products"],
-          });
-          setIsOpen(false);
-          toast.success("Produk berhasil ditambahkan!");
-          reset();
-        },
-        onError: (err: any) => {
-          const msg =
-            err?.response?.data?.message || "Produk gagal ditambahkan";
-          setErrorMessage(msg);
-          toast.error(msg);
-        },
-      });
-    } else {
-      actionEditProduct(values, {
-        onSuccess: () => {
-          queryClient.invalidateQueries({
-            queryKey: ["get10ProductsNotAvailable"],
-          });
-          queryClient.invalidateQueries({
-            queryKey: ["get10ProductsAvailable"],
-          });
-          queryClient.invalidateQueries({
-            queryKey: ["getAllProduct"],
-          });
-          queryClient.invalidateQueries({
-            queryKey: ["getAllProductAvailable"],
-          });
-          queryClient.invalidateQueries({
-            queryKey: ["products"],
-          });
-          setIsOpen(false);
-          toast.success("Produk berhasil diperbarui!");
-        },
-        onError: (err: any) => {
-          const msg =
-            err?.response?.data?.message || "Produk gagal diperbarui";
-          setErrorMessage(msg);
-          toast.error(msg);
-        },
-      });
-    }
+    actionForm(values, {
+      onSuccess: () => {
+        queryClient.invalidateQueries({
+          queryKey: ["get10ProductsNotAvailable"],
+        });
+        queryClient.invalidateQueries({
+          queryKey: ["get10ProductsAvailable"],
+        });
+        queryClient.invalidateQueries({
+          queryKey: ["getAllProduct"],
+        });
+        queryClient.invalidateQueries({
+          queryKey: ["getAllProductAvailable"],
+        });
+        setIsOpen(false);
+        toast.success(
+          mode === "add"
+            ? "Produk berhasil ditambahkan"
+            : "Produk berhasil diperbarui",
+        );
+        form.reset();
+      },
+      onError: () => {
+        toast.error(
+          mode === "add"
+            ? "Produk gagal ditambahkan"
+            : "Produk gagal diperbarui",
+        );
+      },
+    });
   }
 
   return (
     <Dialog open={isOpen} onOpenChange={setIsOpen}>
       {mode === "add" && (
-        <DialogTrigger
-          render={<Button className={`px-7 py-5 ${className || ""}`} />}
-        >
+        <DialogTrigger render={<Button className={`px-7 py-5 ${className || ""}`} />}>
           <FunnelPlus />
           <p>Tambah Produk</p>
         </DialogTrigger>
       )}
 
       {mode === "edit" && (
-        <DialogTrigger
-          render={<Button className={`px-4 py-2 ${className || ""}`} />}
-        >
+        <DialogTrigger render={<Button className={`px-4 py-2 ${className || ""}`} />}>
           <SquarePen />
           <p>Edit Produk</p>
         </DialogTrigger>
       )}
-
       <DialogContent className="gap-0.5">
-        <DialogTitle className="font-bold">
-          {mode === "add" ? "Tambah Produk" : "Edit Produk"}
-        </DialogTitle>
+        {mode === "add" && (
+          <DialogTitle className="font-bold">Tambah Produk</DialogTitle>
+        )}
+        {mode === "edit" && (
+          <DialogTitle className="font-bold">Edit Produk</DialogTitle>
+        )}
         <DialogDescription className="text-sm text-muted-foreground">
           Pastikan informasi produk diisi dengan benar!
         </DialogDescription>
@@ -219,7 +156,7 @@ export function AddProduct({
                   <FormItem>
                     <InputNumber
                       value={field.value}
-                      setValue={(val) => field.onChange(Number(val))}
+                      setValue={field.onChange}
                       namingText="Harga Jual"
                     />
                   </FormItem>
@@ -233,7 +170,7 @@ export function AddProduct({
                   <FormItem>
                     <InputNumber
                       value={field.value}
-                      setValue={(val) => field.onChange(Number(val))}
+                      setValue={field.onChange}
                       namingText="Keuntungan Bersih"
                     />
                   </FormItem>
@@ -245,13 +182,12 @@ export function AddProduct({
                   control={control}
                   name="categoryId"
                   render={({ field }) => (
-                    <FormItem className="flex-1">
+                    <FormItem>
                       <OptionCategory
-                        className="w-full"
+                        className="w-50"
                         value={field.value}
                         setValue={field.onChange}
                         namingText="Kategori"
-                        includeAll={false}
                       />
                     </FormItem>
                   )}
@@ -261,10 +197,10 @@ export function AddProduct({
                   control={control}
                   name="stock"
                   render={({ field }) => (
-                    <FormItem className="flex-1">
+                    <FormItem>
                       <InputNumber
                         value={field.value}
-                        setValue={(val) => field.onChange(Number(val))}
+                        setValue={field.onChange}
                         namingText="Jumlah Stok"
                       />
                     </FormItem>
@@ -273,12 +209,8 @@ export function AddProduct({
               </div>
             </div>
 
-            {errorMessage && (
-              <p className="text-red-500 text-sm mt-2">{errorMessage}</p>
-            )}
-
-            <Button className="w-full mt-4" type="submit" disabled={isPending}>
-              {isPending ? "Menyimpan..." : "Simpan"}
+            <Button className="w-full mt-4 bg-primary" type="submit">
+              Simpan
             </Button>
           </form>
         </Form>

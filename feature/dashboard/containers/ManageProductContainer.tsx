@@ -16,7 +16,7 @@ export function ManageProductContainer() {
   const [selectedStatus, setSelectedStatus] = useState(
     () => searchParams.get("status") || "all",
   );
-  const [selectedCategory, setSelectedCategory] = useState("");
+  const [selectedCategory, setSelectedCategory] = useState("all");
 
   useEffect(() => {
     const params = new URLSearchParams();
@@ -25,11 +25,12 @@ export function ManageProductContainer() {
     router.replace(`${pathname}${queryString ? `?${queryString}` : ""}`);
   }, [selectedStatus, pathname, router]);
 
-  const { data: dataProduct = [] } = useGetAllProductAvailable({
+  const { data } = useGetAllProductAvailable({
     status: selectedStatus === "all" ? undefined : selectedStatus,
     category: selectedCategory === "all" ? undefined : selectedCategory,
   });
 
+  const dataProduct = data || [];
   return (
     <>
       <div className="flex gap-4 justify-center items-center font-bold text-2xl">
@@ -58,7 +59,7 @@ export function ManageProductContainer() {
       </div>
 
       <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 xl:grid-cols-5 gap-4 mt-5">
-        {dataProduct.map((p: any) => (
+        {dataProduct.map((p) => (
           <CardProduct
             key={p.id}
             productId={p.id}

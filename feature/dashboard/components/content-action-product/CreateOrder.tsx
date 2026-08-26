@@ -1,5 +1,4 @@
 "use client";
-
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -20,7 +19,6 @@ import { useForm } from "react-hook-form";
 import { Step1CreateOrder } from "../step-create-order/Step1CreateOrder";
 import { Step2CreateOrder } from "../step-create-order/Step2CreateOrder";
 import { Step3CreateOrder } from "../step-create-order/Step3CreateOrder";
-import { Step4CreateOrder } from "../step-create-order/Step4CreateOrder";
 import { FooterCreateOrder } from "../step-create-order/FooterCreateOrder";
 import { useActionAddOrder } from "../../action/useActionAddOrder";
 import { toast } from "sonner";
@@ -28,32 +26,52 @@ import { useQueryClient } from "@tanstack/react-query";
 
 export function CreateOrder({ className }: { className?: string }) {
   const [isOpen, setIsOpen] = useState(false);
-  const [errorMessage, setErrorMessage] = useState("");
-  const [step, setStep] = useState(1);
+  const queryClient = useQueryClient();
 
   const form = useForm<validationAddOrder>({
     resolver: zodResolver(AddOrderSchema),
     defaultValues: {
       namaCustomer: "",
-      nameCustomer: "",
-      paymentMethod: "Cash",
       inputPayment: 0,
-      listItemProduct: [],
+      productSells: [],
     },
   });
 
-  const queryClient = useQueryClient();
-  const { mutate: addOrder, isPending } = useActionAddOrder();
+  const { mutate: addOrder } = useActionAddOrder();
+
+  function submitForm(data: validationAddOrder) {
+    addOrder(
+      { data },
+      {
+        onSuccess: () => {
+          queryClient.invalidateQueries({ queryKey: ["get10ProductsAvailable"] });
+          queryClient.invalidateQueries({ queryKey: ["get10ProductsNotAvailable"] });
+          queryClient.invalidateQueries({ queryKey: ["getAllProduct"] });
+          queryClient.invalidateQueries({ queryKey: ["getAllProductAvailable"] });
+          toast.success("Pesanan berhasil dibuat!");
+          reset();
+          setStep(1);
+          setIsOpen(false);
+        },
+        onError: () => {
+          toast.error("Gagal membuat pesanan!");
+        },
+      },
+    );
+  }
+
+  const { handleSubmit, reset } = form;
+
+  const [step, setStep] = useState(1);
 
   const dataStep = [
-    { step: 1, titleStep: "Pelanggan" },
-    { step: 2, titleStep: "Produk" },
+    { step: 1, titleStep: "Nama Pelanggan" },
+    { step: 2, titleStep: "Tambah Produk" },
     { step: 3, titleStep: "Pembayaran" },
-    { step: 4, titleStep: "Konfirmasi" },
   ];
 
   function nextStep() {
-    if (step < 4) {
+    if (step < 3) {
       setStep(step + 1);
     }
   }
@@ -62,65 +80,6 @@ export function CreateOrder({ className }: { className?: string }) {
     if (step > 1) {
       setStep(step - 1);
     }
-  }
-
-  function onSubmitOrder(data: validationAddOrder) {
-    setErrorMessage("");
-    const customerName = data.namaCustomer || data.nameCustomer || "Umum";
-    const items = data.listItemProduct || [];
-
-    if (items.length === 0) {
-      setErrorMessage("Minimal satu produk harus ditambahkan!");
-      toast.error("Minimal satu produk harus ditambahkan!");
-      setStep(2);
-      return;
-    }
-
-    const payload: validationAddOrder = {
-      ...data,
-      namaCustomer: customerName,
-      nameCustomer: customerName,
-      productSells: items.map((item) => ({
-        productId: item.productId,
-        quantity: item.quantity,
-      })),
-    };
-
-    addOrder(
-      { data: payload },
-      {
-        onSuccess: () => {
-          queryClient.invalidateQueries({ queryKey: ["transactions"] });
-          queryClient.invalidateQueries({ queryKey: ["bestSellers"] });
-          queryClient.invalidateQueries({
-            queryKey: ["get10ProductsAvailable"],
-          });
-          queryClient.invalidateQueries({
-            queryKey: ["get10ProductsNotAvailable"],
-          });
-          queryClient.invalidateQueries({ queryKey: ["getAllProduct"] });
-          queryClient.invalidateQueries({
-            queryKey: ["getAllProductAvailable"],
-          });
-          queryClient.invalidateQueries({ queryKey: ["products"] });
-          toast.success("Pesanan berhasil dibuat!");
-          form.reset({
-            namaCustomer: "",
-            nameCustomer: "",
-            paymentMethod: "Cash",
-            inputPayment: 0,
-            listItemProduct: [],
-          });
-          setStep(1);
-          setIsOpen(false);
-        },
-        onError: (err: any) => {
-          const msg = err?.response?.data?.message || "Gagal membuat pesanan!";
-          setErrorMessage(msg);
-          toast.error(msg);
-        },
-      },
-    );
   }
 
   return (
@@ -136,10 +95,10 @@ export function CreateOrder({ className }: { className?: string }) {
         <p>Buat Pesanan</p>
       </DialogTrigger>
 
-      <DialogContent className="gap-0.5 max-w-lg">
+      <DialogContent className="gap-0.5">
         <DialogTitle className="font-bold">Buat Pesanan</DialogTitle>
 
-        <div className="flex justify-around my-4 pb-2">
+        <div className="flex justify-around my-5 pb-2">
           {dataStep.map((item) => (
             <StepItem
               key={item.step}
@@ -149,26 +108,19 @@ export function CreateOrder({ className }: { className?: string }) {
             />
           ))}
         </div>
-
         <Form {...form}>
           <form
-            onSubmit={form.handleSubmit(onSubmitOrder)}
             className="flex flex-col w-full justify-center items-center"
+            onSubmit={handleSubmit(submitForm)}
           >
             {step === 1 && <Step1CreateOrder control={form} />}
             {step === 2 && <Step2CreateOrder control={form} />}
             {step === 3 && <Step3CreateOrder control={form} />}
-            {step === 4 && <Step4CreateOrder control={form} />}
-
-            {errorMessage && (
-              <p className="text-red-500 text-sm mt-2">{errorMessage}</p>
-            )}
 
             <FooterCreateOrder
               nextStep={nextStep}
               prevStep={prevStep}
               step={step}
-              isSubmitting={isPending}
             />
           </form>
         </Form>
