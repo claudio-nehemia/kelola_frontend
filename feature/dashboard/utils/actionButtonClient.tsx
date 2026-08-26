@@ -8,21 +8,21 @@ import Link from "next/link";
 export const actionButtonClient = [
   {
     nameButton: "Buat Pesanan",
-    component: <CreateOrder />,
+    component: <CreateOrder className="lg:w-57 xl:w-55" />,
   },
   {
     nameButton: "Tambah Produk",
-    component: <AddProduct mode="add" />,
+    component: <AddProduct mode="add" className="lg:w-56 xl:w-55" />,
   },
   {
     nameButton: "Tambah Kategori",
-    component: <AddCategory />,
+    component: <AddCategory className="lg:w-60 xl:w-55" />,
   },
   {
     nameButton: "Kelola Produk",
     component: (
       <Link href="/manage-product">
-        <Button className="px-5 py-5 whitespace-nowrap">
+        <Button className="px-7 py-5 bg-amber-300 hover:bg-amber-200 hover:cursor-pointer text-black font-bold whitespace-nowrap">
           <PackageSearch />
           <p>Kelola Produk</p>
         </Button>

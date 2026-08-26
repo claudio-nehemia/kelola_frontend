@@ -1,6 +1,16 @@
-export const URL_BE = process.env.NEXT_PUBLIC_BE_URL || process.env.BE_URL || "http://localhost:5000";
+export const URL_BE =
+  process.env.NEXT_PUBLIC_BE_URL ||
+  process.env.BE_URL ||
+  "http://localhost:5000";
 
 export const API_ENDPOINTS = {
+  AUTH: {
+    LOGIN: "/api/auth/login",
+    CHANGE_PASSWORD: "/api/auth/change-password",
+    login: "/api/auth/login",
+    logout: "/api/auth/logout",
+    changePassword: "/api/auth/change-password",
+  },
   CATEGORIES: {
     GET_ALL: "/api/categories",
     CREATE: "/api/categories",
@@ -22,8 +32,17 @@ export const API_ENDPOINTS = {
     GET_ANALYTICS: "/api/transactions/analytics",
     GET_BEST_SELLERS: "/api/transactions/best-sellers",
   },
-  AUTH: {
-    LOGIN: "/api/auth/login",
-    CHANGE_PASSWORD: "/api/auth/change-password",
+  PRODUCT: {
+    get10ProductsAvailable: "/api/products",
+    get10ProductsNotAvailable: "/api/products",
+    addCategory: "/api/categories",
+    getCategory: "/api/categories",
+    addProduct: "/api/products",
+    updateProduct: "/api/products",
+    allProduct: "/api/products",
+    allProductStatus: "/api/products",
+  },
+  ORDER: {
+    addOrder: "/api/transactions",
   },
 };

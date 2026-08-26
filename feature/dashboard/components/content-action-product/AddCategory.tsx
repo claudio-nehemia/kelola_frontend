@@ -8,52 +8,69 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 import { InputText } from "@/feature/_global/components/InputText";
-import { useCreateCategory } from "@/hooks/useCategories";
 import { BadgePlus } from "lucide-react";
 import { useState } from "react";
 import { z } from "zod";
+import { useActionCategoryProduct } from "../../action/useActionCategoryProduct";
+import { toast } from "sonner";
+import { useQueryClient } from "@tanstack/react-query";
 
 const AddCategorySchema = z.object({
-  categoryName: z.string().min(1, "Nama kategori tidak boleh kosong"),
+  name: z.string().min(1, "Nama kategori tidak boleh kosong"),
 });
 
-export function AddCategory() {
+export function AddCategory({ className }: { className?: string }) {
   const [isOpen, setIsOpen] = useState(false);
   const [categoryName, setCategoryName] = useState("");
-  const createCategoryMutation = useCreateCategory();
-  
   const [errors, setErrors] = useState<{
     categoryName?: string;
   }>({});
 
-  async function handleSubmit() {
+  const { mutate: actionAddCategory, isPending } = useActionCategoryProduct();
+  const queryClient = useQueryClient();
+
+  function handleSubmit() {
     const result = AddCategorySchema.safeParse({
-      categoryName: categoryName,
+      name: categoryName,
     });
 
     if (!result.success) {
       const fieldErrors = result.error.flatten().fieldErrors;
       setErrors({
-        categoryName: fieldErrors.categoryName?.[0],
+        categoryName: fieldErrors.name?.[0],
       });
       return;
     }
-    setErrors({});
 
-    try {
-      await createCategoryMutation.mutateAsync(result.data.categoryName);
-      setCategoryName("");
-      setIsOpen(false);
-    } catch (err: any) {
-      setErrors({
-        categoryName: err?.response?.data?.message || "Gagal membuat kategori",
-      });
-    }
+    setErrors({});
+    actionAddCategory(
+      { name: result.data.name },
+      {
+        onSuccess: () => {
+          queryClient.invalidateQueries({ queryKey: ["getCategoryProduct"] });
+          queryClient.invalidateQueries({ queryKey: ["categories"] });
+          toast.success("Kategori berhasil ditambahkan!");
+          setCategoryName("");
+          setIsOpen(false);
+        },
+        onError: (err: any) => {
+          const msg =
+            err?.response?.data?.message ||
+            "Kategori gagal ditambahkan / sudah tersedia";
+          setErrors({ categoryName: msg });
+          toast.error(msg);
+        },
+      },
+    );
   }
 
   return (
     <Dialog open={isOpen} onOpenChange={setIsOpen}>
-      <DialogTrigger render={<Button className=" px-7 py-5" />}>
+      <DialogTrigger
+        render={
+          <Button className={`px-7 py-5 ${className || ""}`} />
+        }
+      >
         <BadgePlus />
         <p>Tambah Kategori</p>
       </DialogTrigger>
@@ -76,9 +93,9 @@ export function AddCategory() {
         <Button
           className="bg-primary mt-4"
           onClick={handleSubmit}
-          disabled={createCategoryMutation.isPending}
+          disabled={isPending}
         >
-          {createCategoryMutation.isPending ? "Menyimpan..." : "Simpan"}
+          {isPending ? "Menyimpan..." : "Simpan"}
         </Button>
       </DialogContent>
     </Dialog>

@@ -5,8 +5,8 @@ import { InputText } from "./InputText";
 import { Button } from "@/components/ui/button";
 import { useState } from "react";
 import { ChangePasswordSchema } from "@/schema/validation-change-password";
-import { useChangePassword } from "@/hooks/useAuth";
-import { useAuthStore } from "@/state/authStore";
+import { useActionChangePassword } from "@/feature/auth/action/useActionChangePassword";
+import { toast } from "sonner";
 
 export function DialogChangePassword({
   isOpen,
@@ -15,54 +15,58 @@ export function DialogChangePassword({
   isOpen: boolean;
   setIsOpen: (isOpen: boolean) => void;
 }) {
-  const [currentPassword, setCurrentPassword] = useState("");
+  const { mutate: changePassword, isPending } = useActionChangePassword();
+
+  const [oldPassword, setOldPassword] = useState("");
   const [newPassword, setNewPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
-  const [generalError, setGeneralError] = useState("");
-
-  const user = useAuthStore((state) => state.data);
-  const changePasswordMutation = useChangePassword();
-
   const [errors, setErrors] = useState<{
-    currentPassword?: string;
+    oldPassword?: string;
     newPassword?: string;
     confirmPassword?: string;
   }>({});
 
-  async function handleSubmit() {
-    setGeneralError("");
+  function handleSubmit() {
+    setErrors({});
     const submit = ChangePasswordSchema.safeParse({
-      currentPassword: currentPassword,
-      newPassword: newPassword,
-      confirmPassword: confirmPassword,
+      oldPassword,
+      newPassword,
+      confirmPassword,
     });
 
     if (!submit.success) {
       const fieldErrors = submit.error.flatten().fieldErrors;
       setErrors({
-        currentPassword: fieldErrors.currentPassword?.[0] || "",
-        newPassword: fieldErrors.newPassword?.[0] || "",
-        confirmPassword: fieldErrors.confirmPassword?.[0] || "",
+        oldPassword: fieldErrors?.oldPassword?.[0] || "",
+        newPassword: fieldErrors?.newPassword?.[0] || "",
+        confirmPassword: fieldErrors?.confirmPassword?.[0] || "",
       });
       return;
     }
 
-    setErrors({});
-
-    try {
-      await changePasswordMutation.mutateAsync({
-        username: user?.username || "admin",
-        oldPassword: currentPassword,
-        newPassword: newPassword,
-      });
-      alert("Password berhasil diperbarui!");
-      setCurrentPassword("");
-      setNewPassword("");
-      setConfirmPassword("");
-      setIsOpen(false);
-    } catch (err: any) {
-      setGeneralError(err?.response?.data?.message || "Gagal mengubah password");
-    }
+    changePassword(
+      {
+        data: {
+          oldPassword,
+          newPassword,
+          confirmPassword,
+        },
+      },
+      {
+        onSuccess: () => {
+          setOldPassword("");
+          setNewPassword("");
+          setConfirmPassword("");
+          toast.success("Password berhasil diubah!");
+          setIsOpen(false);
+        },
+        onError: (err: any) => {
+          const msg =
+            err?.response?.data?.message || "Gagal mengubah password";
+          toast.error(msg);
+        },
+      },
+    );
   }
 
   return (
@@ -72,20 +76,20 @@ export function DialogChangePassword({
           Ubah Password
         </DialogTitle>
 
-        <div className="space-y-4 my-2">
-          <div>
+        <div className="flex flex-col gap-3 my-2">
+          <div className="flex flex-col gap-1">
             <InputText
               namingText="Password Saat Ini"
               type="password"
-              value={currentPassword}
-              setValue={setCurrentPassword}
+              value={oldPassword}
+              setValue={setOldPassword}
             />
-            {errors.currentPassword && (
-              <p className="text-red-500 text-xs mt-1">{errors.currentPassword}</p>
+            {errors.oldPassword && (
+              <p className="text-xs text-red-500 pl-1">{errors.oldPassword}</p>
             )}
           </div>
 
-          <div>
+          <div className="flex flex-col gap-1">
             <InputText
               namingText="Password Baru"
               type="password"
@@ -93,11 +97,11 @@ export function DialogChangePassword({
               setValue={setNewPassword}
             />
             {errors.newPassword && (
-              <p className="text-red-500 text-xs mt-1">{errors.newPassword}</p>
+              <p className="text-xs text-red-500 pl-1">{errors.newPassword}</p>
             )}
           </div>
 
-          <div>
+          <div className="flex flex-col gap-1">
             <InputText
               namingText="Konfirmasi Password Baru"
               type="password"
@@ -105,20 +109,15 @@ export function DialogChangePassword({
               setValue={setConfirmPassword}
             />
             {errors.confirmPassword && (
-              <p className="text-red-500 text-xs mt-1">{errors.confirmPassword}</p>
+              <p className="text-xs text-red-500 pl-1">
+                {errors.confirmPassword}
+              </p>
             )}
           </div>
         </div>
 
-        {generalError && (
-          <p className="text-red-500 text-sm font-semibold">{generalError}</p>
-        )}
-
-        <Button
-          onClick={handleSubmit}
-          disabled={changePasswordMutation.isPending}
-        >
-          {changePasswordMutation.isPending ? "Menyimpan..." : "Simpan Password Baru"}
+        <Button onClick={handleSubmit} disabled={isPending} className="mt-2">
+          {isPending ? "Menyimpan..." : "Simpan Password Baru"}
         </Button>
       </DialogContent>
     </Dialog>

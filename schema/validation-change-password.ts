@@ -2,7 +2,7 @@ import z from "zod";
 
 export const ChangePasswordSchema = z
   .object({
-    currentPassword: z
+    oldPassword: z
       .string()
       .min(6, "Password lama harus terdiri dari minimal 6 karakter"),
     newPassword: z
@@ -14,6 +14,10 @@ export const ChangePasswordSchema = z
   })
   .refine((data) => data.newPassword === data.confirmPassword, {
     message: "Password baru dan konfirmasi password tidak cocok",
+    path: ["confirmPassword"],
+  })
+  .refine((data) => data.newPassword !== data.oldPassword, {
+    message: "Password baru tidak boleh sama dengan password lama",
     path: ["confirmPassword"],
   });
 

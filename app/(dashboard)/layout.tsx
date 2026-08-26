@@ -11,27 +11,21 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { DialogChangePassword } from "@/feature/_global/components/DialogChangePassword";
 import { Footer } from "@/feature/_global/components/Footer";
-import { useAuthStore } from "@/state/authStore";
+import { useActionLogout } from "@/feature/auth/action/useActionLogout";
 import { TextAlignJustify } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
 import { ReactNode, useState } from "react";
 
 export function DashboardLayout({ children }: { children: ReactNode }) {
   const [isOpenDialogChangePassword, setIsOpenDialogChangePassword] =
     useState(false);
-  const clearAuth = useAuthStore((state) => state.clearAuth);
-  const router = useRouter();
 
-  function handleLogout() {
-    clearAuth();
-    router.push("/login");
-  }
+  const { mutate: actionLogout } = useActionLogout();
 
   return (
     <>
-      <div className="flex flex-col w-full min-h-screen overflow-x-hidden">
+      <div className="flex flex-col w-full min-h-screen overflow-x-hidden bg-gray-50/30">
         <div className="flex flex-col w-full bg-[#041336]">
           <div className="flex h-16 items-center justify-between px-6 max-w-7xl mx-auto w-full">
             <Link href="/dashboard">
@@ -59,7 +53,7 @@ export function DashboardLayout({ children }: { children: ReactNode }) {
                   </DropdownMenuItem>
                   <DropdownMenuItem
                     className="bg-red-500 hover:bg-red-600 font-bold text-white cursor-pointer focus:bg-red-600 focus:text-white"
-                    onClick={handleLogout}
+                    onClick={() => actionLogout()}
                   >
                     Log Out
                   </DropdownMenuItem>

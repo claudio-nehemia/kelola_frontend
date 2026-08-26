@@ -7,7 +7,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { useCategories } from "@/hooks/useCategories";
+import { useGetCategoryProduct } from "@/feature/dashboard/action/useGetCategoryProduct";
 
 export function OptionCategory({
   value,
@@ -18,17 +18,23 @@ export function OptionCategory({
 }: {
   value: string;
   setValue: (value: string) => void;
-  namingText: string;
+  namingText?: string;
   className?: string;
   includeAll?: boolean;
 }) {
-  const { data: categories = [] } = useCategories();
+  const { data: options = [] } = useGetCategoryProduct();
+
+  const selectCategory = includeAll
+    ? [{ id: "all", name: "Semua Kategori" }, ...(options || [])]
+    : options || [];
 
   function handleChange(newValue: string | null) {
     if (newValue !== null) {
       setValue(newValue);
     }
   }
+
+  const selectedItem = selectCategory.find((val) => val.id === value);
 
   return (
     <div className={`relative ${className || ""}`}>
@@ -39,15 +45,16 @@ export function OptionCategory({
       )}
 
       <Select value={value} onValueChange={handleChange}>
-        <SelectTrigger className={`${className || ""} py-5`}>
-          <SelectValue placeholder="Pilih Kategori" />
+        <SelectTrigger className={`py-5 ${className || ""}`}>
+          <SelectValue placeholder="Pilih Kategori">
+            {selectedItem?.name || "Pilih Kategori"}
+          </SelectValue>
         </SelectTrigger>
 
-        <SelectContent className="top-12 z-50">
-          {includeAll && <SelectItem value="all">Semua Kategori</SelectItem>}
-          {categories.map((cat) => (
-            <SelectItem key={cat.id} value={cat.id}>
-              {cat.name || cat.categoryName}
+        <SelectContent className="p-1.5 z-50">
+          {selectCategory.map((opt) => (
+            <SelectItem key={opt.id} value={opt.id}>
+              {opt.name}
             </SelectItem>
           ))}
         </SelectContent>

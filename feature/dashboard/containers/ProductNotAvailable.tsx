@@ -3,21 +3,22 @@
 import { CardProduct } from "@/feature/_global/components/CardProduct";
 import { NotebookTabs } from "lucide-react";
 import Link from "next/link";
-import { useProducts } from "@/hooks/useProducts";
+import { useGet10ProductsNotAvailable } from "../action/useGet10ProductsNotAvailable";
+import { Card } from "@/components/ui/card";
+import { cn } from "@/lib/utils";
 
 export function ProductNotAvailable() {
-  const { data: products = [], isLoading } = useProducts();
-
-  const outOfStockProducts = products.filter((p) => p.stock <= 0).slice(0, 10);
+  const { data: productsNotAvailable = [], isLoading } =
+    useGet10ProductsNotAvailable();
 
   return (
-    <div className="space-y-2 mt-10">
+    <div className="space-y-3 mt-8">
       <div className="flex items-center gap-2">
-        <h1 className="flex bg-[#041336] w-fit text-white px-4 rounded-sm font-bold">
+        <h1 className="flex bg-[#041336] w-fit text-white px-4 py-1 rounded-sm font-bold text-sm md:text-base">
           Produk Tidak Tersedia
         </h1>
 
-        <Link href="/product-not-available">
+        <Link href="/manage-product?status=tidak_tersedia">
           <div className="flex text-blue-500 items-center hover:underline cursor-pointer">
             <NotebookTabs size={16} />
             <p className="ml-1 text-sm font-medium">Lihat Detail</p>
@@ -25,25 +26,40 @@ export function ProductNotAvailable() {
         </Link>
       </div>
 
-      {isLoading ? (
-        <p className="text-gray-500 py-4">Memuat produk...</p>
-      ) : outOfStockProducts.length === 0 ? (
-        <p className="text-gray-500 py-4">Tidak ada produk yang habis stok.</p>
-      ) : (
-        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 xl:grid-cols-5 gap-4">
-          {outOfStockProducts.map((product) => (
-            <CardProduct
-              key={product.id}
-              productName={product.name || product.productName || ""}
-              priceSell={product.sellPrice || product.priceSell || 0}
-              cleanProfit={product.cleanProfit || (product.sellPrice - product.costPrice) || 0}
-              stock={product.stock}
-              category={product.category?.name || product.categoryName || "-"}
-              product={product}
-            />
-          ))}
+      {productsNotAvailable.length === 0 && !isLoading && (
+        <div className="border rounded-md flex flex-col justify-center items-center py-6 bg-white">
+          <p className="text-muted-foreground text-center">
+            Semua produk memiliki stok tersedia.
+          </p>
         </div>
       )}
+
+      <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 xl:grid-cols-5 gap-4">
+        {productsNotAvailable.map((product: any) => (
+          <CardProduct
+            key={product.id}
+            productId={product.id}
+            productName={product.name}
+            priceSell={product.priceSell}
+            cleanProfit={product.profit}
+            stock={product.stock}
+            category={product.category}
+          />
+        ))}
+
+        {isLoading && (
+          <>
+            {Array.from({ length: 5 }).map((_, index) => (
+              <Card
+                key={index}
+                className={cn(
+                  "w-full h-52 animate-pulse bg-muted-foreground/20",
+                )}
+              />
+            ))}
+          </>
+        )}
+      </div>
     </div>
   );
 }

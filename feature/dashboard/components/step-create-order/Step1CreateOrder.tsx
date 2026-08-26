@@ -11,7 +11,7 @@ export function Step1CreateOrder({ control }: { control: any }) {
   return (
     <FormField
       control={formControl}
-      name="nameCustomer"
+      name="namaCustomer"
       render={({ field }) => (
         <FormItem className="w-full">
           <FormControl>

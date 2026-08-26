@@ -3,27 +3,31 @@
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { InputText } from "@/feature/_global/components/InputText";
-import { useLogin } from "@/hooks/useAuth";
-import { useRouter } from "next/navigation";
 import { useState } from "react";
 import z from "zod";
+import { useActionLogin } from "../action/useActionLogin";
+import { toast } from "sonner";
 
 export function FormLogin() {
-  const router = useRouter();
-  const loginMutation = useLogin();
+  const { mutate: actionLogin, isPending } = useActionLogin();
 
   const validationSchema = z.object({
-    username: z.string().min(1, { message: "username tidak boleh kosong" }),
-    password: z.string().min(1, { message: "password tidak boleh kosong" }),
+    username: z.string().min(1, { message: "Username tidak boleh kosong" }),
+    password: z.string().min(1, { message: "Password tidak boleh kosong" }),
   });
 
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
-  const [error, setError] = useState<{ username?: string; password?: string; general?: string }>({});
+  const [error, setError] = useState<{
+    username?: string;
+    password?: string;
+    general?: string;
+  }>({});
 
   async function handleSubmit() {
     setError({});
     const result = validationSchema.safeParse({ username, password });
+
     if (!result.success) {
       const fieldErrors = result.error.flatten().fieldErrors;
       setError({
@@ -33,25 +37,34 @@ export function FormLogin() {
       return;
     }
 
-    try {
-      await loginMutation.mutateAsync({ username, password });
-      router.push("/dashboard");
-    } catch (err: any) {
-      setError({
-        general: err?.response?.data?.message || "Login gagal. Periksa username & password.",
-      });
-    }
+    actionLogin(
+      { username, password },
+      {
+        onSuccess: () => {
+          toast.success("Login berhasil!");
+        },
+        onError: (err: any) => {
+          const msg =
+            err?.response?.data?.message ||
+            "Login gagal, silahkan cek kembali username dan password anda";
+          setError({ general: msg });
+          toast.error(msg);
+        },
+      },
+    );
   }
 
   return (
-    <Card className="xl:w-100 py-10 shadow-lg">
+    <Card className="xl:w-100 py-10 shadow-lg border border-gray-200">
       <CardContent>
-        <h2 className="text-xl font-bold text-center mb-6">Kelola POS - Login</h2>
+        <h2 className="text-2xl font-bold text-center mb-6 text-gray-800">
+          Kelola POS - Login
+        </h2>
 
         <div className="flex flex-col gap-5">
           <div>
             <InputText
-              namingText="username"
+              namingText="Username"
               value={username}
               setValue={setUsername}
             />
@@ -63,7 +76,7 @@ export function FormLogin() {
           <div>
             <InputText
               type="password"
-              namingText="password"
+              namingText="Password"
               value={password}
               setValue={setPassword}
             />
@@ -74,15 +87,17 @@ export function FormLogin() {
         </div>
 
         {error.general && (
-          <p className="text-red-500 text-xs text-center mt-3 font-semibold">{error.general}</p>
+          <p className="text-red-500 text-xs text-center mt-3 font-semibold">
+            {error.general}
+          </p>
         )}
 
         <Button
           onClick={handleSubmit}
-          className="w-full mt-6"
-          disabled={loginMutation.isPending}
+          className="w-full mt-6 py-5 font-semibold"
+          disabled={isPending}
         >
-          {loginMutation.isPending ? "Logging in..." : "Login"}
+          {isPending ? "Logging in..." : "Login"}
         </Button>
       </CardContent>
     </Card>

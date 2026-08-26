@@ -9,7 +9,10 @@ import {
 } from "@/components/ui/dialog";
 import { Form } from "@/components/ui/form";
 import StepItem from "@/feature/_global/components/StepItem";
-import { AddOrderSchema, validationAddOrder } from "@/schema/validation-add-order";
+import {
+  AddOrderSchema,
+  validationAddOrder,
+} from "@/schema/validation-add-order";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { ShoppingBasket } from "lucide-react";
 import { useState } from "react";
@@ -19,16 +22,19 @@ import { Step2CreateOrder } from "../step-create-order/Step2CreateOrder";
 import { Step3CreateOrder } from "../step-create-order/Step3CreateOrder";
 import { Step4CreateOrder } from "../step-create-order/Step4CreateOrder";
 import { FooterCreateOrder } from "../step-create-order/FooterCreateOrder";
-import { useCreateTransaction } from "@/hooks/useTransactions";
+import { useActionAddOrder } from "../../action/useActionAddOrder";
+import { toast } from "sonner";
+import { useQueryClient } from "@tanstack/react-query";
 
-export function CreateOrder() {
+export function CreateOrder({ className }: { className?: string }) {
   const [isOpen, setIsOpen] = useState(false);
   const [errorMessage, setErrorMessage] = useState("");
-  const createTransactionMutation = useCreateTransaction();
+  const [step, setStep] = useState(1);
 
-  const form = useForm<any>({
+  const form = useForm<validationAddOrder>({
     resolver: zodResolver(AddOrderSchema),
     defaultValues: {
+      namaCustomer: "",
       nameCustomer: "",
       paymentMethod: "Cash",
       inputPayment: 0,
@@ -36,12 +42,12 @@ export function CreateOrder() {
     },
   });
 
-  const { handleSubmit, reset } = form;
-  const [step, setStep] = useState(1);
+  const queryClient = useQueryClient();
+  const { mutate: addOrder, isPending } = useActionAddOrder();
 
   const dataStep = [
-    { step: 1, titleStep: "Nama Pelanggan" },
-    { step: 2, titleStep: "Tambah Produk" },
+    { step: 1, titleStep: "Pelanggan" },
+    { step: 2, titleStep: "Produk" },
     { step: 3, titleStep: "Pembayaran" },
     { step: 4, titleStep: "Konfirmasi" },
   ];
@@ -58,28 +64,72 @@ export function CreateOrder() {
     }
   }
 
-  async function onSubmitOrder(data: any) {
+  function onSubmitOrder(data: validationAddOrder) {
     setErrorMessage("");
-    try {
-      await createTransactionMutation.mutateAsync(data);
-      reset({
-        nameCustomer: "",
-        paymentMethod: "Cash",
-        inputPayment: 0,
-        listItemProduct: [],
-      });
-      setStep(1);
-      setIsOpen(false);
-    } catch (err: any) {
-      setErrorMessage(err?.response?.data?.message || "Gagal membuat pesanan");
+    const customerName = data.namaCustomer || data.nameCustomer || "Umum";
+    const items = data.listItemProduct || [];
+
+    if (items.length === 0) {
+      setErrorMessage("Minimal satu produk harus ditambahkan!");
+      toast.error("Minimal satu produk harus ditambahkan!");
+      setStep(2);
+      return;
     }
+
+    const payload: validationAddOrder = {
+      ...data,
+      namaCustomer: customerName,
+      nameCustomer: customerName,
+      productSells: items.map((item) => ({
+        productId: item.productId,
+        quantity: item.quantity,
+      })),
+    };
+
+    addOrder(
+      { data: payload },
+      {
+        onSuccess: () => {
+          queryClient.invalidateQueries({ queryKey: ["transactions"] });
+          queryClient.invalidateQueries({ queryKey: ["bestSellers"] });
+          queryClient.invalidateQueries({
+            queryKey: ["get10ProductsAvailable"],
+          });
+          queryClient.invalidateQueries({
+            queryKey: ["get10ProductsNotAvailable"],
+          });
+          queryClient.invalidateQueries({ queryKey: ["getAllProduct"] });
+          queryClient.invalidateQueries({
+            queryKey: ["getAllProductAvailable"],
+          });
+          queryClient.invalidateQueries({ queryKey: ["products"] });
+          toast.success("Pesanan berhasil dibuat!");
+          form.reset({
+            namaCustomer: "",
+            nameCustomer: "",
+            paymentMethod: "Cash",
+            inputPayment: 0,
+            listItemProduct: [],
+          });
+          setStep(1);
+          setIsOpen(false);
+        },
+        onError: (err: any) => {
+          const msg = err?.response?.data?.message || "Gagal membuat pesanan!";
+          setErrorMessage(msg);
+          toast.error(msg);
+        },
+      },
+    );
   }
 
   return (
     <Dialog open={isOpen} onOpenChange={setIsOpen}>
       <DialogTrigger
         render={
-          <Button className="bg-green-500 hover:bg-green-400 px-7 py-5" />
+          <Button
+            className={`bg-green-500 hover:bg-green-400 px-7 py-5 ${className || ""}`}
+          />
         }
       >
         <ShoppingBasket />
@@ -89,7 +139,7 @@ export function CreateOrder() {
       <DialogContent className="gap-0.5 max-w-lg">
         <DialogTitle className="font-bold">Buat Pesanan</DialogTitle>
 
-        <div className="flex justify-between my-5 pb-2">
+        <div className="flex justify-around my-4 pb-2">
           {dataStep.map((item) => (
             <StepItem
               key={item.step}
@@ -99,9 +149,10 @@ export function CreateOrder() {
             />
           ))}
         </div>
+
         <Form {...form}>
           <form
-            onSubmit={handleSubmit(onSubmitOrder)}
+            onSubmit={form.handleSubmit(onSubmitOrder)}
             className="flex flex-col w-full justify-center items-center"
           >
             {step === 1 && <Step1CreateOrder control={form} />}
@@ -117,7 +168,7 @@ export function CreateOrder() {
               nextStep={nextStep}
               prevStep={prevStep}
               step={step}
-              isSubmitting={createTransactionMutation.isPending}
+              isSubmitting={isPending}
             />
           </form>
         </Form>

@@ -1,17 +1,10 @@
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
-
-interface User {
-  id: string;
-  email: string;
-  name: string;
-  username: string;
-  userType: string;
-}
+import { User } from "@/feature/auth/models/authModel";
 
 interface authState {
   data: User | null;
-  setAuth: (data: User) => void;
+  setAuth: (data?: User) => void;
   clearAuth: () => void;
 }
 
@@ -19,7 +12,7 @@ export const useAuthStore = create<authState>()(
   persist(
     (set) => ({
       data: null,
-      setAuth: (data: User) => set({ data }),
+      setAuth: (data?: User) => set({ data: data || null }),
       clearAuth: () => set({ data: null }),
     }),
     {

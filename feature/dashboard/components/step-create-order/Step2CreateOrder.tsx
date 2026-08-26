@@ -9,7 +9,7 @@ import {
 } from "@/components/ui/dialog";
 import { FormField, FormItem } from "@/components/ui/form";
 import { SearchProduct } from "@/feature/_global/components/SearchProduct";
-import { useProducts, ProductItem } from "@/hooks/useProducts";
+import { useGetAllProduct } from "../../action/useGetAllProduct";
 import { formatRupiah } from "@/feature/dashboard/helpers/formatRupuah";
 import { Plus, Minus, Trash2 } from "lucide-react";
 import { useState, useRef, useEffect } from "react";
@@ -25,24 +25,24 @@ export function Step2CreateOrder({ control }: { control: any }) {
   const { control: formControl } = control;
   const [searchValue, setSearchValue] = useState("");
   const [showSuggestions, setShowSuggestions] = useState(false);
-
-  const { data: dbProducts = [], isLoading } = useProducts();
-
   const [selectedProduct, setSelectedProduct] = useState<OrderItem | null>(null);
   const [quantity, setQuantity] = useState(1);
   const [isModalOpen, setIsModalOpen] = useState(false);
 
+  const { data: dbProducts = [], isLoading } = useGetAllProduct({
+    search: searchValue,
+  });
+
   const containerRef = useRef<HTMLDivElement>(null);
 
-  const availableProducts = dbProducts.filter((p) => p.stock > 0);
-
-  const filteredProducts = availableProducts.filter((p) =>
-    (p.name || p.productName || "").toLowerCase().includes(searchValue.toLowerCase())
-  );
+  const availableProducts = dbProducts.filter((p: any) => p.stock > 0);
 
   useEffect(() => {
     function handleClickOutside(event: MouseEvent) {
-      if (containerRef.current && !containerRef.current.contains(event.target as Node)) {
+      if (
+        containerRef.current &&
+        !containerRef.current.contains(event.target as Node)
+      ) {
         setShowSuggestions(false);
       }
     }
@@ -57,11 +57,11 @@ export function Step2CreateOrder({ control }: { control: any }) {
       render={({ field }) => {
         const currentList: OrderItem[] = field.value || [];
 
-        const handleSelectProduct = (p: ProductItem) => {
+        const handleSelectProduct = (p: any) => {
           setSelectedProduct({
             productId: p.id,
             name: p.name || p.productName || "",
-            price: p.sellPrice || p.priceSell || 0,
+            price: p.priceSell || p.sellPrice || 0,
             quantity: 1,
           });
           setQuantity(1);
@@ -73,7 +73,7 @@ export function Step2CreateOrder({ control }: { control: any }) {
           if (!selectedProduct || quantity <= 0) return;
 
           const existingIndex = currentList.findIndex(
-            (item) => item.productId === selectedProduct.productId
+            (item) => item.productId === selectedProduct.productId,
           );
 
           let updatedList: OrderItem[];
@@ -106,13 +106,15 @@ export function Step2CreateOrder({ control }: { control: any }) {
         };
 
         const handleRemoveItem = (productId: string) => {
-          const updatedList = currentList.filter((item) => item.productId !== productId);
+          const updatedList = currentList.filter(
+            (item) => item.productId !== productId,
+          );
           field.onChange(updatedList);
         };
 
         const totalAmount = currentList.reduce(
-          (sum, item) => sum + item.price * item.quantity,
-          0
+          (sum, item) => sum + (item.price || 0) * item.quantity,
+          0,
         );
 
         return (
@@ -132,24 +134,34 @@ export function Step2CreateOrder({ control }: { control: any }) {
               {showSuggestions && (
                 <div className="absolute top-12 left-0 right-0 z-50 bg-white border border-gray-200 rounded-md shadow-lg max-h-60 overflow-y-auto">
                   {isLoading ? (
-                    <p className="p-3 text-xs text-gray-500 text-center">Memuat produk...</p>
-                  ) : filteredProducts.length === 0 ? (
                     <p className="p-3 text-xs text-gray-500 text-center">
-                      {searchValue ? "Produk tidak ditemukan." : "Pilih atau cari produk..."}
+                      Memuat produk...
+                    </p>
+                  ) : availableProducts.length === 0 ? (
+                    <p className="p-3 text-xs text-gray-500 text-center">
+                      {searchValue
+                        ? "Produk tidak ditemukan."
+                        : "Pilih atau cari produk..."}
                     </p>
                   ) : (
-                    filteredProducts.map((product) => (
+                    availableProducts.map((product: any) => (
                       <div
                         key={product.id}
                         onClick={() => handleSelectProduct(product)}
                         className="p-2.5 px-4 hover:bg-blue-50 cursor-pointer flex justify-between items-center border-b last:border-0 transition-colors"
                       >
                         <div>
-                          <p className="font-semibold text-sm">{product.name || product.productName}</p>
-                          <p className="text-xs text-gray-500">Stok: {product.stock}</p>
+                          <p className="font-semibold text-sm">
+                            {product.name || product.productName}
+                          </p>
+                          <p className="text-xs text-gray-500">
+                            Stok: {product.stock}
+                          </p>
                         </div>
                         <span className="text-sm font-bold text-blue-600">
-                          {formatRupiah(product.sellPrice || product.priceSell || 0)}
+                          {formatRupiah(
+                            product.priceSell || product.sellPrice || 0,
+                          )}
                         </span>
                       </div>
                     ))
@@ -176,7 +188,9 @@ export function Step2CreateOrder({ control }: { control: any }) {
                   >
                     <Minus className="w-4 h-4" />
                   </Button>
-                  <span className="text-2xl font-bold w-12 text-center">{quantity}</span>
+                  <span className="text-2xl font-bold w-12 text-center">
+                    {quantity}
+                  </span>
                   <Button
                     type="button"
                     variant="outline"
@@ -186,8 +200,13 @@ export function Step2CreateOrder({ control }: { control: any }) {
                     <Plus className="w-4 h-4" />
                   </Button>
                 </div>
-                <Button type="button" onClick={handleAddToCart} className="w-full">
-                  Tambah ke Keranjang ({formatRupiah((selectedProduct?.price || 0) * quantity)})
+                <Button
+                  type="button"
+                  onClick={handleAddToCart}
+                  className="w-full"
+                >
+                  Tambah ke Keranjang (
+                  {formatRupiah((selectedProduct?.price || 0) * quantity)})
                 </Button>
               </DialogContent>
             </Dialog>
@@ -220,7 +239,9 @@ export function Step2CreateOrder({ control }: { control: any }) {
                         <div className="flex items-center gap-1.5 border bg-white rounded px-1">
                           <button
                             type="button"
-                            onClick={() => handleUpdateItemQuantity(item.productId, -1)}
+                            onClick={() =>
+                              handleUpdateItemQuantity(item.productId, -1)
+                            }
                             className="p-1 hover:text-red-600 cursor-pointer"
                           >
                             <Minus className="w-3.5 h-3.5" />
@@ -230,7 +251,9 @@ export function Step2CreateOrder({ control }: { control: any }) {
                           </span>
                           <button
                             type="button"
-                            onClick={() => handleUpdateItemQuantity(item.productId, 1)}
+                            onClick={() =>
+                              handleUpdateItemQuantity(item.productId, 1)
+                            }
                             className="p-1 hover:text-green-600 cursor-pointer"
                           >
                             <Plus className="w-3.5 h-3.5" />
@@ -256,7 +279,9 @@ export function Step2CreateOrder({ control }: { control: any }) {
 
               <div className="mt-4 pt-3 border-t w-full flex justify-between items-center font-bold text-base">
                 <span>Total Harga:</span>
-                <span className="text-blue-600 text-lg">{formatRupiah(totalAmount)}</span>
+                <span className="text-blue-600 text-lg">
+                  {formatRupiah(totalAmount)}
+                </span>
               </div>
             </div>
           </FormItem>

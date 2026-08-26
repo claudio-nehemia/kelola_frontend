@@ -13,6 +13,7 @@ import Image from "next/image";
 import { useState } from "react";
 
 export function CardProduct({
+  productId = "",
   productName,
   priceSell,
   cleanProfit,
@@ -20,6 +21,7 @@ export function CardProduct({
   category,
   product,
 }: {
+  productId?: string;
   productName: string;
   priceSell: number;
   cleanProfit: number;
@@ -28,6 +30,8 @@ export function CardProduct({
   product?: ProductItem;
 }) {
   const [isOpen, setIsOpen] = useState(false);
+  const id = productId || product?.id || "";
+
   return (
     <>
       <Card
@@ -46,10 +50,14 @@ export function CardProduct({
         </div>
         <CardContent className="p-3">
           <h3 className="font-bold text-base truncate">{productName}</h3>
-          <p className="text-sm font-semibold text-blue-600 mt-1">{formatRupiah(priceSell)}</p>
+          <p className="text-sm font-semibold text-blue-600 mt-1">
+            {formatRupiah(priceSell)}
+          </p>
           <div className="flex justify-between items-center text-xs text-gray-500 mt-2">
             <span>Stok: {stock}</span>
-            <span className="bg-gray-100 px-2 py-0.5 rounded truncate max-w-[100px]">{category}</span>
+            <span className="bg-gray-100 px-2 py-0.5 rounded truncate max-w-[100px]">
+              {category}
+            </span>
           </div>
         </CardContent>
       </Card>
@@ -78,7 +86,32 @@ export function CardProduct({
             </p>
 
             <div className="flex justify-end pt-4">
-              <AddProduct mode="edit" initialData={product} />
+              <AddProduct
+                mode="edit"
+                initialData={
+                  product || {
+                    id,
+                    name: productName,
+                    productName,
+                    sellPrice: priceSell,
+                    priceSell,
+                    costPrice: priceSell - cleanProfit,
+                    cleanProfit,
+                    stock,
+                    categoryId: category,
+                  }
+                }
+                editMode={{
+                  productId: id,
+                  data: {
+                    name: productName,
+                    priceSell,
+                    profit: cleanProfit,
+                    stock,
+                    categoryId: category,
+                  },
+                }}
+              />
             </div>
           </div>
         </DialogContent>
