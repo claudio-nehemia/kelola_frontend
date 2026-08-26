@@ -26,7 +26,10 @@ export function useActionLogin() {
           daysRemaining: data.daysRemaining,
         });
 
-        if (data.role === "SUPER_ADMIN") {
+        const role = (data.role || "").toUpperCase();
+        if (role === "OWNER") {
+          router.push("/owner/dashboard");
+        } else if (role === "SUPER_ADMIN") {
           router.push("/admin/dashboard");
         } else {
           router.push("/dashboard");

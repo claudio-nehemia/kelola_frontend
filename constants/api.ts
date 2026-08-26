@@ -7,6 +7,15 @@ export const API_ENDPOINTS = {
     LOGOUT: "/api/auth/logout",
     CHANGE_PASSWORD: "/api/auth/change-password",
   },
+  OWNER: {
+    OVERVIEW: "/api/owner/overview",
+    SUPERADMINS: "/api/owner/superadmins",
+    CREATE_SUPERADMIN: "/api/owner/superadmins",
+    UPDATE_SUPERADMIN: (id: string) => `/api/owner/superadmins/${id}`,
+    DELETE_SUPERADMIN: (id: string) => `/api/owner/superadmins/${id}`,
+    AUDIT_LOGS: "/api/owner/audit-logs",
+    REPORTS: "/api/owner/reports",
+  },
   ADMIN: {
     STATS: "/api/admin/stats",
     PRICING: "/api/admin/pricing",
